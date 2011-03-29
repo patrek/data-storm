@@ -1,6 +1,10 @@
 package datastorm.eventstore.otientdb;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.axonframework.domain.AggregateIdentifier;
@@ -45,9 +49,11 @@ public class OrientEventStore implements EventStore {
             String aggregateCluster = null;
 
             AggregateIdentifier aggregateIdentifier = event.getAggregateIdentifier();
-            if(clusterResolver != null) {
+            if (clusterResolver != null) {
                 aggregateCluster = clusterResolver.resolveClusterForAggregate(type, aggregateIdentifier);
             }
+
+            createClass(type, aggregateCluster);
 
             ODocument eventDocument = new ODocument(database, type);
             eventDocument.field("aggregateIdentifier", aggregateIdentifier.asString());
@@ -68,7 +74,14 @@ public class OrientEventStore implements EventStore {
                     database.query(new OSQLSynchQuery<ODocument>("select * from " + type +
                             " where aggregateIdentifier = '" + aggregateIdentifier.asString() +
                             "' order by sequenceNumber"));
-            return new SimpleDomainEventStream(new DocumentEventIterator(queryResult.iterator()));
+
+            return new SimpleDomainEventStream(Collections2.transform(queryResult,
+                    new Function<ODocument, DomainEvent>() {
+                        @Override
+                        public DomainEvent apply(ODocument document) {
+                            return eventSerializer.deserialize(document.<byte[]>field("body"));
+                        }
+                    }));
         } catch (IllegalArgumentException e) {
             throw new EventStoreException(
                     String.format("An error occurred while trying to read events "
@@ -86,31 +99,20 @@ public class OrientEventStore implements EventStore {
         this.clusterResolver = clusterResolver;
     }
 
-    private final class DocumentEventIterator implements Iterator<DomainEvent>, Iterable<DomainEvent> {
-        private final Iterator<ODocument> documentIterator;
-
-        private DocumentEventIterator(Iterator<ODocument> classIterator) {
-            this.documentIterator = classIterator;
+    private void createClass(String type, String clusterName) {
+        OClass eventClass;
+        if(database.getMetadata().getSchema().existsClass(type)) {
+            return;
+        }
+        if (clusterName != null) {
+            eventClass = database.getMetadata().getSchema().createClass(type,
+                    database.getClusterIdByName(clusterName));
+        } else {
+            eventClass = database.getMetadata().getSchema().createClass(type);
         }
 
-        public boolean hasNext() {
-            return documentIterator.hasNext();
-        }
-
-        public DomainEvent next() {
-            return document2DomainView(documentIterator.next());
-        }
-
-        public void remove() {
-            throw new UnsupportedOperationException("Remove operation is not supported");
-        }
-
-        public Iterator<DomainEvent> iterator() {
-            return this;
-        }
-
-        private DomainEvent document2DomainView(ODocument document) {
-            return eventSerializer.deserialize(document.<byte[]>field("body"));
-        }
+        eventClass.createProperty("aggregateIdentifier", OType.STRING);
+        eventClass.createProperty("sequenceNumber", OType.LONG);
+        eventClass.createProperty("body", OType.BINARY);
     }
 }

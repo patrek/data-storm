@@ -23,8 +23,8 @@ public class PerInstanceClusterResolver implements ClusterResolver {
         final int clusterId = database.getClusterIdByName(iClusterName);
         if(clusterId == -1) {
             database.addPhysicalCluster(iClusterName);
-            logger.debug("Cluster with name \"{0}\" for Aggregate with id:[{1}] was created.", iClusterName,
-                    aggregateIdentifier.asString() );
+            logger.debug("Cluster with name \"{}\" for Aggregate type {} with id:[{}] was created.",
+                    new Object[] {iClusterName, type, aggregateIdentifier.asString()});
         }
 
         return iClusterName;
