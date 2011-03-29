@@ -5,7 +5,6 @@ import org.axonframework.domain.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import sun.java2d.pipe.SpanShapeRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +19,8 @@ import static org.junit.Assert.assertTrue;
  * @author EniSh
  */
 public class OrientEventStoreTest {
-    private ODatabaseDocumentTx database;
-    private OrientEventStore orientEventStore;
+    protected ODatabaseDocumentTx database;
+    protected OrientEventStore orientEventStore;
 
     @Before
     public void setUp() throws Exception {
@@ -98,6 +97,185 @@ public class OrientEventStoreTest {
         assertEquals(sequenceNumbers.length, i);
     }
 
+    @Test
+    public void testEventsFromDifferentTypesWithSameId() {
+        final SimpleDomainEvent eventOneDocOne = new SimpleDomainEvent(1,
+                new StringAggregateIdentifier("1"), "val1doc1");
+        final SimpleDomainEvent eventTwoDocOne = new SimpleDomainEvent(2,
+                new StringAggregateIdentifier("1"), "val2doc1");
+
+        final SimpleDomainEvent eventOneDocTwo = new SimpleDomainEvent(1,
+                new StringAggregateIdentifier("1"), "val1doc2");
+        final SimpleDomainEvent eventTwoDocTwo = new SimpleDomainEvent(2,
+                new StringAggregateIdentifier("1"), "val2doc2");
+
+        final DomainEventStream domainEventStreamDocOne = new SimpleDomainEventStream(eventTwoDocOne,
+                eventOneDocOne);
+
+        final DomainEventStream domainEventStreamDocTwo = new SimpleDomainEventStream(eventOneDocTwo,
+                eventTwoDocTwo);
+
+        orientEventStore.appendEvents("DocOne", domainEventStreamDocOne);
+        orientEventStore.appendEvents("DocTwo", domainEventStreamDocTwo);
+
+        DomainEventStream readEventStreamDocTwo =
+                orientEventStore.readEvents("DocTwo", new StringAggregateIdentifier("1"));
+
+        DomainEventStream readEventStreamDocOne =
+                orientEventStore.readEvents("DocOne", new StringAggregateIdentifier("1"));
+
+
+        assertTrue(readEventStreamDocOne.hasNext());
+        assertTrue(readEventStreamDocTwo.hasNext());
+
+        final SimpleDomainEvent readEventOneDocOne = (SimpleDomainEvent)readEventStreamDocOne.next();
+        assertEquals((Long)1L, readEventOneDocOne.getSequenceNumber());
+        assertEquals("1", readEventOneDocOne.getAggregateIdentifier().asString());
+        assertEquals("val1doc1", readEventOneDocOne.getValue());
+
+        assertTrue(readEventStreamDocOne.hasNext());
+
+        final SimpleDomainEvent readEventTwoDocOne = (SimpleDomainEvent)readEventStreamDocOne.next();
+        assertEquals((Long)2L, readEventTwoDocOne.getSequenceNumber());
+        assertEquals("1", readEventTwoDocOne.getAggregateIdentifier().asString());
+        assertEquals("val2doc1", readEventTwoDocOne.getValue());
+
+        assertFalse(readEventStreamDocOne.hasNext());
+
+        final SimpleDomainEvent readEventOneDocTwo = (SimpleDomainEvent)readEventStreamDocTwo.next();
+        assertEquals((Long)1L, readEventOneDocTwo.getSequenceNumber());
+        assertEquals("1", readEventOneDocTwo.getAggregateIdentifier().asString());
+        assertEquals("val1doc2", readEventOneDocTwo.getValue());
+
+        assertTrue(readEventStreamDocTwo.hasNext());
+
+        final SimpleDomainEvent readEventTwoDocTwo = (SimpleDomainEvent)readEventStreamDocTwo.next();
+        assertEquals((Long)2L, readEventTwoDocTwo.getSequenceNumber());
+        assertEquals("1", readEventTwoDocTwo.getAggregateIdentifier().asString());
+        assertEquals("val2doc2", readEventTwoDocTwo.getValue());
+
+        assertFalse(readEventStreamDocTwo.hasNext());
+    }
+
+    @Test
+    public void testEventsFromDifferentTypesWithDiffId() {
+        final SimpleDomainEvent eventOneDocOne = new SimpleDomainEvent(1,
+                new StringAggregateIdentifier("1"), "val1doc1");
+        final SimpleDomainEvent eventTwoDocOne = new SimpleDomainEvent(2,
+                new StringAggregateIdentifier("1"), "val2doc1");
+
+        final SimpleDomainEvent eventOneDocTwo = new SimpleDomainEvent(1,
+                new StringAggregateIdentifier("2"), "val1doc2");
+        final SimpleDomainEvent eventTwoDocTwo = new SimpleDomainEvent(2,
+                new StringAggregateIdentifier("2"), "val2doc2");
+
+        final DomainEventStream domainEventStreamDocOne = new SimpleDomainEventStream(eventTwoDocOne,
+                eventOneDocOne);
+
+        final DomainEventStream domainEventStreamDocTwo = new SimpleDomainEventStream(eventOneDocTwo,
+                eventTwoDocTwo);
+
+        orientEventStore.appendEvents("DocOne", domainEventStreamDocOne);
+        orientEventStore.appendEvents("DocTwo", domainEventStreamDocTwo);
+
+        DomainEventStream readEventStreamDocTwo =
+                orientEventStore.readEvents("DocTwo", new StringAggregateIdentifier("2"));
+
+        DomainEventStream readEventStreamDocOne =
+                orientEventStore.readEvents("DocOne", new StringAggregateIdentifier("1"));
+
+
+        assertTrue(readEventStreamDocOne.hasNext());
+        assertTrue(readEventStreamDocTwo.hasNext());
+
+        final SimpleDomainEvent readEventOneDocOne = (SimpleDomainEvent)readEventStreamDocOne.next();
+        assertEquals((Long)1L, readEventOneDocOne.getSequenceNumber());
+        assertEquals("1", readEventOneDocOne.getAggregateIdentifier().asString());
+        assertEquals("val1doc1", readEventOneDocOne.getValue());
+
+        assertTrue(readEventStreamDocOne.hasNext());
+
+        final SimpleDomainEvent readEventTwoDocOne = (SimpleDomainEvent)readEventStreamDocOne.next();
+        assertEquals((Long)2L, readEventTwoDocOne.getSequenceNumber());
+        assertEquals("1", readEventTwoDocOne.getAggregateIdentifier().asString());
+        assertEquals("val2doc1", readEventTwoDocOne.getValue());
+
+        assertFalse(readEventStreamDocOne.hasNext());
+
+        final SimpleDomainEvent readEventOneDocTwo = (SimpleDomainEvent)readEventStreamDocTwo.next();
+        assertEquals((Long)1L, readEventOneDocTwo.getSequenceNumber());
+        assertEquals("2", readEventOneDocTwo.getAggregateIdentifier().asString());
+        assertEquals("val1doc2", readEventOneDocTwo.getValue());
+
+        assertTrue(readEventStreamDocTwo.hasNext());
+
+        final SimpleDomainEvent readEventTwoDocTwo = (SimpleDomainEvent)readEventStreamDocTwo.next();
+        assertEquals((Long)2L, readEventTwoDocTwo.getSequenceNumber());
+        assertEquals("2", readEventTwoDocTwo.getAggregateIdentifier().asString());
+        assertEquals("val2doc2", readEventTwoDocTwo.getValue());
+
+        assertFalse(readEventStreamDocTwo.hasNext());
+    }
+
+    @Test
+    public void testEventsWithDiffId() {
+        final SimpleDomainEvent eventOneDocOne = new SimpleDomainEvent(1,
+                new StringAggregateIdentifier("1"), "val1doc1");
+        final SimpleDomainEvent eventTwoDocOne = new SimpleDomainEvent(2,
+                new StringAggregateIdentifier("1"), "val2doc1");
+
+        final SimpleDomainEvent eventOneDocTwo = new SimpleDomainEvent(1,
+                new StringAggregateIdentifier("2"), "val1doc2");
+        final SimpleDomainEvent eventTwoDocTwo = new SimpleDomainEvent(2,
+                new StringAggregateIdentifier("2"), "val2doc2");
+
+        final DomainEventStream domainEventStreamDocOne = new SimpleDomainEventStream(eventTwoDocOne,
+                eventOneDocOne);
+
+        final DomainEventStream domainEventStreamDocTwo = new SimpleDomainEventStream(eventOneDocTwo,
+                eventTwoDocTwo);
+
+        orientEventStore.appendEvents("Doc", domainEventStreamDocOne);
+        orientEventStore.appendEvents("Doc", domainEventStreamDocTwo);
+
+        DomainEventStream readEventStreamDocTwo =
+                orientEventStore.readEvents("Doc", new StringAggregateIdentifier("2"));
+
+        DomainEventStream readEventStreamDocOne =
+                orientEventStore.readEvents("Doc", new StringAggregateIdentifier("1"));
+
+
+        assertTrue(readEventStreamDocOne.hasNext());
+        assertTrue(readEventStreamDocTwo.hasNext());
+
+        final SimpleDomainEvent readEventOneDocOne = (SimpleDomainEvent)readEventStreamDocOne.next();
+        assertEquals((Long)1L, readEventOneDocOne.getSequenceNumber());
+        assertEquals("1", readEventOneDocOne.getAggregateIdentifier().asString());
+        assertEquals("val1doc1", readEventOneDocOne.getValue());
+
+        assertTrue(readEventStreamDocOne.hasNext());
+
+        final SimpleDomainEvent readEventTwoDocOne = (SimpleDomainEvent)readEventStreamDocOne.next();
+        assertEquals((Long)2L, readEventTwoDocOne.getSequenceNumber());
+        assertEquals("1", readEventTwoDocOne.getAggregateIdentifier().asString());
+        assertEquals("val2doc1", readEventTwoDocOne.getValue());
+
+        assertFalse(readEventStreamDocOne.hasNext());
+
+        final SimpleDomainEvent readEventOneDocTwo = (SimpleDomainEvent)readEventStreamDocTwo.next();
+        assertEquals((Long)1L, readEventOneDocTwo.getSequenceNumber());
+        assertEquals("2", readEventOneDocTwo.getAggregateIdentifier().asString());
+        assertEquals("val1doc2", readEventOneDocTwo.getValue());
+
+        assertTrue(readEventStreamDocTwo.hasNext());
+
+        final SimpleDomainEvent readEventTwoDocTwo = (SimpleDomainEvent)readEventStreamDocTwo.next();
+        assertEquals((Long)2L, readEventTwoDocTwo.getSequenceNumber());
+        assertEquals("2", readEventTwoDocTwo.getAggregateIdentifier().asString());
+        assertEquals("val2doc2", readEventTwoDocTwo.getValue());
+
+        assertFalse(readEventStreamDocTwo.hasNext());
+    }
 
     protected static final class SimpleDomainEvent extends DomainEvent {
         private String value;
