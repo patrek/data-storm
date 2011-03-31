@@ -67,11 +67,12 @@ public class OrientEventStore implements EventStore {
 
             eventDocument.save(aggregateCluster);
             if(aggregateCluster != null) {
-                logger.debug("Aggregate with type \"{}\" and id [{}] was saved to the cluster \"{}\".",
-                        new Object[] {type, aggregateIdentifier.asString(), aggregateCluster});
+                logger.debug("Event with type \"{}\" id [{}] and sequence number {} was saved to the cluster \"{}\".",
+                        new Object[] {type, aggregateIdentifier.asString(), event.getSequenceNumber() ,
+                                aggregateCluster});
             } else {
-                logger.debug("Aggregate with type \"{}\" and id [{}] was saved to the default cluster.",
-                        new Object[] {type, aggregateIdentifier.asString()});
+                logger.debug("Event with type \"{}\" id [{}] and sequence number {} was saved to the default cluster.",
+                        new Object[] {type, event.getSequenceNumber() ,aggregateIdentifier.asString()});
             }
         }
     }
@@ -89,7 +90,7 @@ public class OrientEventStore implements EventStore {
         if (aggregateCluster != null) {
             query = "select * from cluster:" + aggregateCluster +
                     " where aggregateIdentifier = '" + aggregateIdentifier.asString() +
-                    "' order by sequenceNumber";
+                    "' and @class = '" + type + "'  order by sequenceNumber";
         } else {
             query = "select * from " + type +
                     " where aggregateIdentifier = '" + aggregateIdentifier.asString() +
@@ -99,7 +100,7 @@ public class OrientEventStore implements EventStore {
         final List<ODocument> queryResult =
                 database.query(new OSQLSynchQuery<ODocument>(query));
 
-        logger.debug("Query \"{}\" was performed and {} items were fetched.", query, queryResult.size());
+        logger.debug("Query \"{}\" was performed and {} events were fetched.", query, queryResult.size());
 
         return new SimpleDomainEventStream(Collections2.transform(queryResult,
                 new Function<ODocument, DomainEvent>() {
