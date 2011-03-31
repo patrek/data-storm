@@ -19,7 +19,7 @@ public class PerInstanceClusterResolver implements ClusterResolver {
      * {@inheritDoc}
      */
     public String resolveClusterForAggregate(String type, AggregateIdentifier aggregateIdentifier) {
-        String iClusterName = composeClusterName(type, aggregateIdentifier);
+        final String iClusterName = composeClusterName(type, aggregateIdentifier);
         final int clusterId = database.getClusterIdByName(iClusterName);
         if(clusterId == -1) {
             final int createdClusterId = database.addPhysicalCluster(iClusterName);
