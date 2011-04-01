@@ -132,7 +132,7 @@ public class OrientEventStore implements EventStore {
             logger.debug("OClass \"{}\" was created and associated with cluster \"{}\".", type, clusterName);
         } else {
             eventClass = schema.createClass(type);
-            logger.debug("OClass \"{}\" was created.", type, clusterName);
+            logger.debug("OClass \"{}\" was created.", type);
         }
 
         eventClass.createProperty("aggregateIdentifier", OType.STRING).setMandatory(true).setNotNull(true);
