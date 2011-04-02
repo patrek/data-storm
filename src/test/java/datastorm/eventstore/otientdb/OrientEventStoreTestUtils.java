@@ -1,5 +1,6 @@
 package datastorm.eventstore.otientdb;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.axonframework.domain.*;
 
 import java.util.*;
@@ -50,5 +51,14 @@ class OrientEventStoreTestUtils {
 
     public static AggregateIdentifier agId(String id) {
         return new StringAggregateIdentifier(id);
+    }
+
+    public static void assertClusterNames(Collection<String> beforeClusters,
+                                          Collection<String> afterClusters, String[] clusterNames) {
+        assertEquals(beforeClusters.size() + clusterNames.length, afterClusters.size());
+        for(String clusterName : clusterNames) {
+            assertFalse(beforeClusters.contains(clusterName));
+            assertTrue(afterClusters.contains(clusterName));
+        }
     }
 }
