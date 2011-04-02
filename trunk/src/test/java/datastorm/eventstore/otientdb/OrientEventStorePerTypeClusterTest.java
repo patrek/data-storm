@@ -2,6 +2,10 @@ package datastorm.eventstore.otientdb;
 
 import org.junit.Before;
 
+import java.util.Collection;
+
+import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertClusterNames;
+
 /**
  * Integration test case for {@link OrientEventStore}.
  * This test case tests storing and reading events in case when
@@ -10,6 +14,8 @@ import org.junit.Before;
  * @author Andrey Lomakin
  */
 public class OrientEventStorePerTypeClusterTest extends OrientEventStoreTest {
+    private Collection<String> beforeClusters;
+
     @Override
     @Before
     public void setUp() throws Exception {
@@ -17,5 +23,38 @@ public class OrientEventStorePerTypeClusterTest extends OrientEventStoreTest {
         final PerTypeClusterResolver clusterResolver = new PerTypeClusterResolver();
         clusterResolver.setDatabase(database);
         orientEventStore.setClusterResolver(clusterResolver);
+        beforeClusters = database.getClusterNames();
+    }
+
+    @Override
+    public void testBasicEventsStoring() throws Exception {
+        super.testBasicEventsStoring();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"simple"});
+    }
+
+    @Override
+    public void testEventsFromDifferentTypesWithSameId() {
+        super.testEventsFromDifferentTypesWithSameId();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"docone", "doctwo"});
+    }
+
+    @Override
+    public void testEventsFromDifferentTypesWithDiffId() {
+        super.testEventsFromDifferentTypesWithDiffId();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"docone", "doctwo"});
+    }
+
+    @Override
+    public void testEventsWithDiffId() {
+        super.testEventsWithDiffId();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"doc"});
     }
 }
