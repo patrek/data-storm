@@ -1,6 +1,6 @@
 package datastorm.eventstore.otientdb;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.axonframework.domain.AggregateIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ public class SimpleClusterResolver implements ClusterResolver {
 
     private String clusterName;
 
-    private ODatabaseDocumentTx database;
+    private ODatabaseDocument database;
 
     /**
      * @param clusterName Cluster name that is intended to be created.
@@ -32,7 +32,7 @@ public class SimpleClusterResolver implements ClusterResolver {
     public String resolveClusterForAggregate(String type, AggregateIdentifier aggregateIdentifier) {
         final int clusterId = database.getClusterIdByName(clusterName);
         if (clusterId == -1) {
-            final int createdClusterId = database.addPhysicalCluster(clusterName);
+            final int createdClusterId = database.addPhysicalCluster(clusterName, clusterName, -1);
             logger.debug("Cluster with name \"{}\" and id [{}] was created for Aggregate with type \"{}\".",
                     new Object[]{type, createdClusterId, clusterName});
         }
@@ -44,7 +44,7 @@ public class SimpleClusterResolver implements ClusterResolver {
      *
      * @param database Document Database instance.
      */
-    public void setDatabase(ODatabaseDocumentTx database) {
+    public void setDatabase(ODatabaseDocument database) {
         this.database = database;
     }
 }
