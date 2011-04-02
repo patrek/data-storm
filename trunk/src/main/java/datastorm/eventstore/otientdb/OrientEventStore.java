@@ -3,7 +3,7 @@ package datastorm.eventstore.otientdb;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.primitives.Ints;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -31,7 +31,7 @@ public class OrientEventStore implements EventStore {
 
     private final EventSerializer eventSerializer;
 
-    private ODatabaseDocumentTx database;
+    private ODatabaseDocument database;
     private ClusterResolver clusterResolver;
 
     public OrientEventStore() {
@@ -66,13 +66,13 @@ public class OrientEventStore implements EventStore {
             eventDocument.field("body", eventSerializer.serialize(event));
 
             eventDocument.save(aggregateCluster);
-            if(aggregateCluster != null) {
+            if (aggregateCluster != null) {
                 logger.debug("Event with type \"{}\" id [{}] and sequence number {} was saved to the cluster \"{}\".",
-                        new Object[] {type, aggregateIdentifier.asString(), event.getSequenceNumber() ,
+                        new Object[]{type, aggregateIdentifier.asString(), event.getSequenceNumber(),
                                 aggregateCluster});
             } else {
                 logger.debug("Event with type \"{}\" id [{}] and sequence number {} was saved to the default cluster.",
-                        new Object[] {type, event.getSequenceNumber() ,aggregateIdentifier.asString()});
+                        new Object[]{type, event.getSequenceNumber(), aggregateIdentifier.asString()});
             }
         }
     }
@@ -111,7 +111,7 @@ public class OrientEventStore implements EventStore {
                 }));
     }
 
-    public void setDatabase(ODatabaseDocumentTx database) {
+    public void setDatabase(ODatabaseDocument database) {
         this.database = database;
     }
 
@@ -159,7 +159,7 @@ public class OrientEventStore implements EventStore {
         clusterIds[clusterIds.length - 1] = clusterId;
 
         logger.debug("Cluster with name \"{}\" and id [{}] was added to the OClass \"{}\" definition.",
-                new Object[] {clusterName, clusterId, type});
+                new Object[]{clusterName, clusterId, type});
 
     }
 }

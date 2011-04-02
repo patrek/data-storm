@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="benchMark" class="datastorm.integrationtests.eventstore.benchmark.orientdb.OrientEventStoreBenchMark">
+        <constructor-arg index="0" ref="eventStore"/>
+        <constructor-arg index="1" ref="oDocumentDatabase"/>
+    </bean>
+
+    <bean id="eventStore" class="datastorm.eventstore.otientdb.OrientEventStore">
+        <property name="database" ref="oDocumentDatabase"/>
+        <property name="clusterResolver" ref="clusterResolver"/>
+    </bean>
+
+    <bean id="oDocumentDatabase" class="datastorm.eventstore.otientdb.ODatabaseDocumentProxy">
+        <property name="databaseURL" value="remote:localhost/benchmarkorient"/>
+        <property name="databaseUserName" value="admin"/>
+        <property name="databasePassword" value="admin"/>
+    </bean>
+
+    <bean id="clusterResolver"
+          class="datastorm.eventstore.otientdb.PerInstanceClusterResolver">
+        <property name="database" ref="oDocumentDatabase"/>
+    </bean>
+</beans>
