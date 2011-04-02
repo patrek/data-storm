@@ -1,6 +1,6 @@
 package datastorm.eventstore.otientdb;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.axonframework.domain.AggregateIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class PerInstanceClusterResolver implements ClusterResolver {
     private static final Logger logger = LoggerFactory.getLogger(PerInstanceClusterResolver.class);
 
-    private ODatabaseDocumentTx database;
+    private ODatabaseDocument database;
 
     /**
      * {@inheritDoc}
@@ -21,10 +21,10 @@ public class PerInstanceClusterResolver implements ClusterResolver {
     public String resolveClusterForAggregate(String type, AggregateIdentifier aggregateIdentifier) {
         final String iClusterName = composeClusterName(type, aggregateIdentifier);
         final int clusterId = database.getClusterIdByName(iClusterName);
-        if(clusterId == -1) {
-            final int createdClusterId = database.addPhysicalCluster(iClusterName);
+        if (clusterId == -1) {
+            final int createdClusterId = database.addPhysicalCluster(iClusterName, iClusterName, -1);
             logger.debug("Cluster with name \"{}\" and id [{}] was created for Aggregate with type \"{}\" and id [{}].",
-                    new Object[] {iClusterName, createdClusterId, type, aggregateIdentifier.asString()});
+                    new Object[]{iClusterName, createdClusterId, type, aggregateIdentifier.asString()});
         }
 
         return iClusterName;
@@ -32,9 +32,10 @@ public class PerInstanceClusterResolver implements ClusterResolver {
 
     /**
      * Sets Document Database instance.
+     *
      * @param database Document Database instance.
      */
-    public void setDatabase(ODatabaseDocumentTx database) {
+    public void setDatabase(ODatabaseDocument database) {
         this.database = database;
     }
 
