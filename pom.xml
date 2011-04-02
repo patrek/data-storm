@@ -34,6 +34,15 @@
                 <artifactId>cobertura-maven-plugin</artifactId>
                 <version>${cobertura.version}</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -42,6 +51,12 @@
         <dependency>
             <groupId>org.axonframework</groupId>
             <artifactId>axon-core</artifactId>
+            <version>1.0-rc3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.axonframework</groupId>
+            <artifactId>axon-integrationtests</artifactId>
             <version>1.0-rc3</version>
         </dependency>
 
@@ -56,6 +71,13 @@
             <artifactId>orientdb-core</artifactId>
             <version>1.0rc1-SNAPSHOT</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-client</artifactId>
+            <version>1.0rc1-SNAPSHOT</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -76,6 +98,29 @@
             <version>4.8.2</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>3.0.5.RELEASE</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>3.0.5.RELEASE</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib</artifactId>
+            <version>2.2</version>
+            <scope>test</scope>
+        </dependency>
+
+
     </dependencies>
 
     <repositories>
