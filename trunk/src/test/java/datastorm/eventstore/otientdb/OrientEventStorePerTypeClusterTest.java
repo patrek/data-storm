@@ -4,6 +4,7 @@ import org.junit.Before;
 
 import java.util.Collection;
 
+import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertClassHasClusterIds;
 import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertClusterNames;
 
 /**
@@ -32,6 +33,7 @@ public class OrientEventStorePerTypeClusterTest extends OrientEventStoreTest {
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"simple"});
+        assertClassHasClusterIds(new String[]{"simple"}, "Simple", database);
     }
 
     @Override
@@ -40,6 +42,8 @@ public class OrientEventStorePerTypeClusterTest extends OrientEventStoreTest {
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"docone", "doctwo"});
+        assertClassHasClusterIds(new String[]{"docone"}, "DocOne", database);
+        assertClassHasClusterIds(new String[]{"doctwo"}, "DocTwo", database);
     }
 
     @Override
@@ -48,6 +52,8 @@ public class OrientEventStorePerTypeClusterTest extends OrientEventStoreTest {
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"docone", "doctwo"});
+        assertClassHasClusterIds(new String[]{"docone"}, "DocOne", database);
+        assertClassHasClusterIds(new String[]{"doctwo"}, "DocTwo", database);
     }
 
     @Override
@@ -56,5 +62,6 @@ public class OrientEventStorePerTypeClusterTest extends OrientEventStoreTest {
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"doc"});
+        assertClassHasClusterIds(new String[]{"doc"}, "Doc", database);
     }
 }

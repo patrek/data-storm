@@ -5,6 +5,7 @@ import org.junit.Before;
 
 import java.util.Collection;
 
+import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertClassHasClusterIds;
 import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertClusterNames;
 
 /**
@@ -25,6 +26,36 @@ public class OrientEventStoreSimpleClusterTest extends OrientEventStoreTest {
         clusterResolver.setDatabase(database);
         orientEventStore.setClusterResolver(clusterResolver);
         beforeClusters = database.getClusterNames();
+    }
+
+    @Override
+    public void testBasicEventsStoring() throws Exception {
+        super.testBasicEventsStoring();
+
+        assertClassHasClusterIds(new String[]{"bigcluster"}, "Simple", database);
+    }
+
+    @Override
+    public void testEventsFromDifferentTypesWithSameId() {
+        super.testEventsFromDifferentTypesWithSameId();
+
+        assertClassHasClusterIds(new String[]{"bigcluster"}, "DocOne", database);
+        assertClassHasClusterIds(new String[]{"bigcluster"}, "DocTwo", database);
+    }
+
+    @Override
+    public void testEventsFromDifferentTypesWithDiffId() {
+        super.testEventsFromDifferentTypesWithDiffId();
+
+        assertClassHasClusterIds(new String[]{"bigcluster"}, "DocOne", database);
+        assertClassHasClusterIds(new String[]{"bigcluster"}, "DocTwo", database);
+    }
+
+    @Override
+    public void testEventsWithDiffId() {
+        super.testEventsWithDiffId();
+
+        assertClassHasClusterIds(new String[]{"bigcluster"}, "Doc", database);
     }
 
     @Override
