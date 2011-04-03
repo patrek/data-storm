@@ -3,7 +3,7 @@ package datastorm.eventstore.otientdb;
 import org.axonframework.domain.AggregateIdentifier;
 
 /**
- * OrinetDb allows to create clusters (physical or logical).
+ * OrientDb allows to create clusters (physical or logical).
  * <p/>
  * This strategy composes cluster name and decides whether it is needed
  * to create new cluster (physical or logical) for the given Aggregate.
