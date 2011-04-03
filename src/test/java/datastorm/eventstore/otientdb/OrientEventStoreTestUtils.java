@@ -1,6 +1,8 @@
 package datastorm.eventstore.otientdb;
 
+import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import org.axonframework.domain.*;
 
 import java.util.*;
@@ -56,9 +58,20 @@ class OrientEventStoreTestUtils {
     public static void assertClusterNames(Collection<String> beforeClusters,
                                           Collection<String> afterClusters, String[] clusterNames) {
         assertEquals(beforeClusters.size() + clusterNames.length, afterClusters.size());
-        for(String clusterName : clusterNames) {
+        for (String clusterName : clusterNames) {
             assertFalse(beforeClusters.contains(clusterName));
             assertTrue(afterClusters.contains(clusterName));
+        }
+    }
+
+    public static void assertClassHasClusterIds(String[] expectedClusterNames, String className,
+                                         ODatabaseDocument database) {
+        final OClass oClass = database.getMetadata().getSchema().getClass(className);
+        assertEquals(expectedClusterNames.length, oClass.getClusterIds().length);
+        final List<Integer> clusterIds = Ints.asList(oClass.getClusterIds());
+        for(final String expectedClusterName : expectedClusterNames) {
+            int expectedClusterId = database.getClusterIdByName(expectedClusterName);
+            assertTrue(clusterIds.contains(expectedClusterId));
         }
     }
 }
