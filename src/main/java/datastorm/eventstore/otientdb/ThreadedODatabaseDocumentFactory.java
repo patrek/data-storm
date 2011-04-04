@@ -10,10 +10,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  *         Date: 04.04.11
  */
 public class ThreadedODatabaseDocumentFactory {
-    private ThreadLocal<ODatabaseDocument> database = new ThreadLocal<ODatabaseDocument>();
-    private String databaseURL;
-    private String databaseUserName;
-    private String databasePassword;
+    private final ThreadLocal<ODatabaseDocument> database = new ThreadLocal<ODatabaseDocument>();
+    private final String databaseURL;
+    private final String databaseUserName;
+    private final String databasePassword;
 
     public ThreadedODatabaseDocumentFactory(String databaseURL, String databaseUserName, String databasePassword) {
         this.databaseURL = databaseURL;
