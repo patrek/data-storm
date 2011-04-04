@@ -48,18 +48,21 @@ public class OrientEventStoreTest {
 
         orientEventStore.appendEvents("Doc", stream(domainEvents));
 
-        ORecordIteratorClass<ODocument> iteratorClass = database.browseClass("Doc", false);
+        ORecordIteratorClass<ODocument> iteratorClass = database.browseClass(OrientEventStore.DOMAIN_EVENT_CLASS,
+                false);
         assertTrue(iteratorClass.hasNext());
         final ODocument eventDocument = iteratorClass.next();
 
         final Set<String> fieldNames = eventDocument.fieldNames();
-        assertEquals(4, fieldNames.size());
+        assertEquals(5, fieldNames.size());
 
         assertTrue(fieldNames.contains("aggregateIdentifier"));
         assertTrue(fieldNames.contains("sequenceNumber"));
         assertTrue(fieldNames.contains("timestamp"));
         assertTrue(fieldNames.contains("body"));
+        assertTrue(fieldNames.contains("aggregateType"));
 
+        assertEquals("Doc", eventDocument.<String>field("aggregateType"));
         assertEquals("1", eventDocument.<String>field("aggregateIdentifier"));
         assertEquals((Long)1L , eventDocument.<Long>field("sequenceNumber"));
         assertEquals(domainEvents.get(0).getTimestamp().toString() ,
@@ -75,13 +78,20 @@ public class OrientEventStoreTest {
 
         orientEventStore.appendEvents("Doc", stream(domainEvents));
 
-        ORecordIteratorClass<ODocument> iteratorClass = database.browseClass("Doc", false);
+        ORecordIteratorClass<ODocument> iteratorClass = database.browseClass(OrientEventStore.DOMAIN_EVENT_CLASS,
+                false);
         assertTrue(iteratorClass.hasNext());
         final ODocument eventDocument = iteratorClass.next();
         final OClass eventClass = eventDocument.getSchemaClass();
 
         assertNotNull(eventClass);
-        assertEquals("Doc", eventClass.getName());
+        assertEquals(OrientEventStore.DOMAIN_EVENT_CLASS, eventClass.getName());
+
+        final OProperty aggregateTypeProperty = eventClass.getProperty("aggregateType");
+        assertNotNull(aggregateTypeProperty);
+        assertTrue(aggregateTypeProperty.isMandatory());
+        assertTrue(aggregateTypeProperty.isNotNull());
+        assertEquals(OType.STRING, aggregateTypeProperty.getType());
 
         final OProperty aggregateIdentifierProperty = eventClass.getProperty("aggregateIdentifier");
         assertNotNull(aggregateIdentifierProperty);
