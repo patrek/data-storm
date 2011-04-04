@@ -22,7 +22,16 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- * An {@link EventStore} implementation that uses OrientDB to store DomainEvents in a database.
+ * An {@link EventStore} implementation that uses Document oriented OrientDB to store DomainEvents in a database.
+ * The actual DomainEvent is stored as byte array document field.
+ * Other fields are used to store meta-data that allow quick finding of DomainEvents for a
+ * specific aggregate in the correct order.
+ * <p/>
+ * The serializer is used to serialize the events is configurable.
+ * By default, the {@link XStreamEventSerializer} is used.
+ *
+ * You can specify {@link ClusterResolver} that will be used to identify and create clusters where DomainEvents
+ * will be stored.
  *
  * @author EniSh
  */
@@ -38,6 +47,11 @@ public class OrientEventStore implements EventStore {
         eventSerializer = new XStreamEventSerializer();
     }
 
+    /**
+     * Initialize EventStore with given serializer.
+     *
+     * @param eventSerializer  Serializer that is used to store events
+     */
     public OrientEventStore(EventSerializer eventSerializer) {
         this.eventSerializer = eventSerializer;
     }
@@ -111,10 +125,20 @@ public class OrientEventStore implements EventStore {
                 }));
     }
 
+    /**
+     * Set OrientDB document oriented database instance that will be used to store DomainEvents.
+     *
+     * @param database  OrientDB document oriented database instance.
+     */
     public void setDatabase(ODatabaseDocument database) {
         this.database = database;
     }
 
+    /**
+     * Set {@link ClusterResolver} that will be used to identify in which cluster DomainEvents will be stored.
+     *
+     * @param clusterResolver {@link ClusterResolver} instance.
+     */
     public void setClusterResolver(ClusterResolver clusterResolver) {
         this.clusterResolver = clusterResolver;
     }
