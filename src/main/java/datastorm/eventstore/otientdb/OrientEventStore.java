@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.sun.org.apache.bcel.internal.generic.D2F;
 import org.axonframework.domain.AggregateIdentifier;
 import org.axonframework.domain.DomainEvent;
 import org.axonframework.domain.DomainEventStream;
@@ -31,7 +30,7 @@ import java.util.List;
  * <p/>
  * The serializer is used to serialize the events is configurable.
  * By default, the {@link XStreamEventSerializer} is used.
- *
+ * <p/>
  * You can specify {@link ClusterResolver} that will be used to identify and create clusters where DomainEvents
  * will be stored.
  *
@@ -45,6 +44,8 @@ public class OrientEventStore implements SnapshotEventStore {
      */
     public static final String DOMAIN_EVENT_CLASS = "DomainEvent";
 
+    public static final String SNAPSHOT_EVENT_CLASS = "AggregateSnapshot";
+
     private final EventSerializer eventSerializer;
 
     private ODatabaseDocument database;
@@ -57,7 +58,7 @@ public class OrientEventStore implements SnapshotEventStore {
     /**
      * Initialize EventStore with given serializer.
      *
-     * @param eventSerializer  Serializer that is used to store events
+     * @param eventSerializer Serializer that is used to store events
      */
     public OrientEventStore(EventSerializer eventSerializer) {
         this.eventSerializer = eventSerializer;
@@ -69,33 +70,7 @@ public class OrientEventStore implements SnapshotEventStore {
     public void appendEvents(String type, DomainEventStream domainEventStream) {
         while (domainEventStream.hasNext()) {
             final DomainEvent event = domainEventStream.next();
-
-            String aggregateCluster = null;
-
-            final AggregateIdentifier aggregateIdentifier = event.getAggregateIdentifier();
-            if (clusterResolver != null) {
-                aggregateCluster = clusterResolver.resolveClusterForAggregate(type, aggregateIdentifier);
-            }
-
-            createEventClass(aggregateCluster);
-            addClusterToTheClassDefinition(aggregateCluster);
-
-            ODocument eventDocument = new ODocument(database, DOMAIN_EVENT_CLASS);
-            eventDocument.field("aggregateIdentifier", aggregateIdentifier.asString());
-            eventDocument.field("sequenceNumber", event.getSequenceNumber());
-            eventDocument.field("timestamp", event.getTimestamp().toString());
-            eventDocument.field("body", eventSerializer.serialize(event));
-            eventDocument.field("aggregateType", type);
-
-            eventDocument.save(aggregateCluster);
-            if (aggregateCluster != null) {
-                logger.debug("Event with type \"{}\" id [{}] and sequence number {} was saved to the cluster \"{}\".",
-                        new Object[]{type, aggregateIdentifier.asString(), event.getSequenceNumber(),
-                                aggregateCluster});
-            } else {
-                logger.debug("Event with type \"{}\" id [{}] and sequence number {} was saved to the default cluster.",
-                        new Object[]{type, event.getSequenceNumber(), aggregateIdentifier.asString()});
-            }
+            appendEvent(type, event, DOMAIN_EVENT_CLASS);
         }
     }
 
@@ -137,13 +112,14 @@ public class OrientEventStore implements SnapshotEventStore {
 
     @Override
     public void appendSnapshotEvent(String type, DomainEvent snapshotEvent) {
+
     }
 
 
     /**
      * Set OrientDB document oriented database instance that will be used to store DomainEvents.
      *
-     * @param database  OrientDB document oriented database instance.
+     * @param database OrientDB document oriented database instance.
      */
     public void setDatabase(ODatabaseDocument database) {
         this.database = database;
@@ -158,21 +134,50 @@ public class OrientEventStore implements SnapshotEventStore {
         this.clusterResolver = clusterResolver;
     }
 
-    private void createEventClass(String clusterName) {
+    private void appendEvent(String aggregateType, DomainEvent event, String eventClass) {
+        String aggregateCluster = null;
+
+        final AggregateIdentifier aggregateIdentifier = event.getAggregateIdentifier();
+        if (clusterResolver != null) {
+            aggregateCluster = clusterResolver.resolveClusterForAggregate(aggregateType, aggregateIdentifier);
+        }
+
+        createEventClass(eventClass, aggregateCluster);
+        addClusterToTheClassDefinition(eventClass, aggregateCluster);
+
+        ODocument eventDocument = new ODocument(database, eventClass);
+        eventDocument.field("aggregateIdentifier", aggregateIdentifier.asString());
+        eventDocument.field("sequenceNumber", event.getSequenceNumber());
+        eventDocument.field("timestamp", event.getTimestamp().toString());
+        eventDocument.field("body", eventSerializer.serialize(event));
+        eventDocument.field("aggregateType", aggregateType);
+
+        eventDocument.save(aggregateCluster);
+        if (aggregateCluster != null) {
+            logger.debug("Event with aggregateType \"{}\" id [{}] and sequence number {} was saved to the cluster \"{}\".",
+                    new Object[]{aggregateType, aggregateIdentifier.asString(), event.getSequenceNumber(),
+                            aggregateCluster});
+        } else {
+            logger.debug("Event with aggregateType \"{}\" id [{}] and sequence number {} was saved to the default cluster.",
+                    new Object[]{aggregateType, event.getSequenceNumber(), aggregateIdentifier.asString()});
+        }
+    }
+
+    private void createEventClass(String className, String clusterName) {
         OSchema schema = database.getMetadata().getSchema();
-        OClass eventClass = schema.getClass(DOMAIN_EVENT_CLASS);
+        OClass eventClass = schema.getClass(className);
 
         if (eventClass != null) {
             return;
         }
 
         if (clusterName != null) {
-            eventClass = schema.createClass(DOMAIN_EVENT_CLASS, database.getClusterIdByName(clusterName));
-            logger.debug("OClass \"{}\" was created and associated with cluster \"{}\".", DOMAIN_EVENT_CLASS,
+            eventClass = schema.createClass(className, database.getClusterIdByName(clusterName));
+            logger.debug("OClass \"{}\" was created and associated with cluster \"{}\".", className,
                     clusterName);
         } else {
-            eventClass = schema.createClass(DOMAIN_EVENT_CLASS);
-            logger.debug("OClass \"{}\" was created.", DOMAIN_EVENT_CLASS);
+            eventClass = schema.createClass(className);
+            logger.debug("OClass \"{}\" was created.", className);
         }
 
         eventClass.createProperty("aggregateIdentifier", OType.STRING).setMandatory(true).setNotNull(true);
@@ -183,12 +188,12 @@ public class OrientEventStore implements SnapshotEventStore {
         eventClass.createProperty("aggregateType", OType.STRING).setMandatory(true).setNotNull(true);
     }
 
-    private void addClusterToTheClassDefinition(String clusterName) {
+    private void addClusterToTheClassDefinition(String className, String clusterName) {
         if (clusterName == null) {
             return;
         }
 
-        final OClass eventClass = database.getMetadata().getSchema().getClass(DOMAIN_EVENT_CLASS);
+        final OClass eventClass = database.getMetadata().getSchema().getClass(className);
         final int clusterId = database.getClusterIdByName(clusterName);
 
         if (Ints.contains(eventClass.getClusterIds(), clusterId)) {
@@ -200,7 +205,7 @@ public class OrientEventStore implements SnapshotEventStore {
         clusterIds[clusterIds.length - 1] = clusterId;
 
         logger.debug("Cluster with name \"{}\" and id [{}] was added to the OClass \"{}\" definition.",
-                new Object[]{clusterName, clusterId, DOMAIN_EVENT_CLASS});
+                new Object[]{clusterName, clusterId, className});
 
     }
 }
