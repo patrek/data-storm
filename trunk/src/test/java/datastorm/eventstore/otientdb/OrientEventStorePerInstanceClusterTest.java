@@ -35,7 +35,7 @@ public class OrientEventStorePerInstanceClusterTest extends OrientEventStoreTest
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"simple.1"});
-        assertClassHasClusterIds(new String[]{"simple.1"}, "Simple", database);
+        assertClassHasClusterIds(new String[]{"simple.1"}, OrientEventStore.DOMAIN_EVENT_CLASS, database);
     }
 
     @Override
@@ -45,8 +45,7 @@ public class OrientEventStorePerInstanceClusterTest extends OrientEventStoreTest
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"docone.1", "doctwo.1"});
-        assertClassHasClusterIds(new String[]{"docone.1"}, "DocOne", database);
-        assertClassHasClusterIds(new String[]{"doctwo.1"}, "DocTwo", database);
+        assertClassHasClusterIds(new String[]{"docone.1", "doctwo.1"}, OrientEventStore.DOMAIN_EVENT_CLASS, database);
     }
 
     @Override
@@ -56,8 +55,7 @@ public class OrientEventStorePerInstanceClusterTest extends OrientEventStoreTest
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"docone.1", "doctwo.2"});
-        assertClassHasClusterIds(new String[]{"docone.1"}, "DocOne", database);
-        assertClassHasClusterIds(new String[]{"doctwo.2"}, "DocTwo", database);
+        assertClassHasClusterIds(new String[]{"docone.1", "doctwo.2"}, OrientEventStore.DOMAIN_EVENT_CLASS, database);
     }
 
     @Override
@@ -67,6 +65,6 @@ public class OrientEventStorePerInstanceClusterTest extends OrientEventStoreTest
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"doc.1", "doc.2"});
-        assertClassHasClusterIds(new String[]{"doc.1", "doc.2"}, "Doc", database);
+        assertClassHasClusterIds(new String[]{"doc.1", "doc.2"}, OrientEventStore.DOMAIN_EVENT_CLASS, database);
     }
 }
