@@ -44,6 +44,9 @@ public class OrientEventStore implements SnapshotEventStore {
      */
     public static final String DOMAIN_EVENT_CLASS = "DomainEvent";
 
+    /**
+     * Name of the document class that will be used to store snapshot events.
+     */
     public static final String SNAPSHOT_EVENT_CLASS = "AggregateSnapshot";
 
     private final EventSerializer eventSerializer;
