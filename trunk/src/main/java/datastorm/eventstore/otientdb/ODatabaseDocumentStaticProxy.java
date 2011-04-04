@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -23,7 +22,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
-
 import java.util.*;
 
 /**
@@ -33,38 +31,16 @@ import java.util.*;
  * @author EniSh
  *         Date: 02.04.11
  */
-public class ODatabaseDocumentProxy implements ODatabaseDocument {
-    private ThreadLocal<ODatabaseDocument> database = new ThreadLocal<ODatabaseDocument>();
-    private String databaseURL;
-    private String databaseUserName;
-    private String databasePassword;
+public class ODatabaseDocumentStaticProxy implements ODatabaseDocument {
+    private ThreadedODatabaseDocumentFactory databaseFactory;
 
-    private ODatabaseDocument getThreadLocalDatabase() {
-        ODatabaseDocument databaseDocument = database.get();
-        if (databaseDocument == null) {
-            databaseDocument = new ODatabaseDocumentTx(databaseURL).open(databaseUserName, databasePassword);
-// Works fine while using less then 50 connections, but fails
-//            databaseDocument = new ODatabaseDocumentPool().global().acquire(databaseURL, databaseUserName, databasePassword);
-            database.set(databaseDocument);
-        }
-        return databaseDocument;
-    }
-
-    public void setDatabaseURL(String databaseURL) {
-        this.databaseURL = databaseURL;
-    }
-
-    public void setDatabaseUserName(String databaseUserName) {
-        this.databaseUserName = databaseUserName;
-    }
-
-    public void setDatabasePassword(String databasePassword) {
-        this.databasePassword = databasePassword;
+    public ODatabaseDocumentStaticProxy(ThreadedODatabaseDocumentFactory databaseFactory) {
+        this.databaseFactory = databaseFactory;
     }
 
     @Override
     public ORecordIteratorClass<ODocument> browseClass(String iClassName) {
-        return getThreadLocalDatabase().browseClass(iClassName);
+        return databaseFactory.getThreadLocalDatabase().browseClass(iClassName);
     }
 
     public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
@@ -156,7 +132,7 @@ public class ODatabaseDocumentProxy implements ODatabaseDocument {
 
     @Override
     public ODatabaseComplex<ORecordInternal<?>> save(ORecordInternal<?> iObject, String iClusterName) {
-        return getThreadLocalDatabase().save(iObject, iClusterName);
+        return databaseFactory.getThreadLocalDatabase().save(iObject, iClusterName);
     }
 
     @Override
@@ -171,7 +147,7 @@ public class ODatabaseDocumentProxy implements ODatabaseDocument {
 
     @Override
     public ODatabaseComplex<ORecordInternal<?>> begin() {
-        return getThreadLocalDatabase().begin();
+        return databaseFactory.getThreadLocalDatabase().begin();
     }
 
     @Override
@@ -186,7 +162,7 @@ public class ODatabaseDocumentProxy implements ODatabaseDocument {
 
     @Override
     public ODatabaseComplex<ORecordInternal<?>> commit() {
-        return getThreadLocalDatabase().commit();
+        return databaseFactory.getThreadLocalDatabase().commit();
     }
 
     @Override
@@ -206,7 +182,7 @@ public class ODatabaseDocumentProxy implements ODatabaseDocument {
 
     @Override
     public OMetadata getMetadata() {
-        return getThreadLocalDatabase().getMetadata();
+        return databaseFactory.getThreadLocalDatabase().getMetadata();
     }
 
     @Override
@@ -326,7 +302,7 @@ public class ODatabaseDocumentProxy implements ODatabaseDocument {
 
     @Override
     public int getClusterIdByName(String iClusterName) {
-        return getThreadLocalDatabase().getClusterIdByName(iClusterName);
+        return databaseFactory.getThreadLocalDatabase().getClusterIdByName(iClusterName);
     }
 
     @Override
@@ -366,7 +342,7 @@ public class ODatabaseDocumentProxy implements ODatabaseDocument {
 
     @Override
     public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize) {
-        return getThreadLocalDatabase().addPhysicalCluster(iClusterName, iClusterFileName, iStartSize);
+        return databaseFactory.getThreadLocalDatabase().addPhysicalCluster(iClusterName, iClusterFileName, iStartSize);
     }
 
     @Override

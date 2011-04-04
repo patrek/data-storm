@@ -36,8 +36,8 @@ import java.util.List;
 public abstract class AbstractEventStoreBenchmark {
 
     private static final int THREAD_COUNT = 100;   //100
-    private static final int TRANSACTION_COUNT = 500;    //500
-    private static final int TRANSACTION_SIZE = 2;       //2
+    private static final int TRANSACTION_COUNT = 100;    //500
+    private static final int TRANSACTION_SIZE = 10;       //2
 
     protected abstract void prepareEventStore();
 
