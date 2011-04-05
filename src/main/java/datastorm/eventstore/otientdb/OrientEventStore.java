@@ -113,9 +113,12 @@ public class OrientEventStore implements SnapshotEventStore {
                 }));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void appendSnapshotEvent(String type, DomainEvent snapshotEvent) {
-
+        appendEvent(type, snapshotEvent, SNAPSHOT_EVENT_CLASS);
     }
 
 
@@ -204,9 +207,6 @@ public class OrientEventStore implements SnapshotEventStore {
         }
 
         eventClass.addClusterIds(clusterId);
-        int[] clusterIds = eventClass.getClusterIds();
-        clusterIds[clusterIds.length - 1] = clusterId;
-
         logger.debug("Cluster with name \"{}\" and id [{}] was added to the OClass \"{}\" definition.",
                 new Object[]{clusterName, clusterId, className});
 
