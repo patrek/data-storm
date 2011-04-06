@@ -21,6 +21,7 @@ import static org.junit.Assert.*;
 /**
  * Integration test case for {@link OrientEventStore}.
  * This test case tests only  storing and reading events for default cluster.
+ * Snapshots events are not covered.
  *
  * @author EniSh
  */
@@ -42,13 +43,19 @@ public class OrientEventStoreTest {
     }
 
     @Test
+    public void testEmptyListEventReading() {
+        final DomainEventStream eventStream = orientEventStore.readEvents("Doc", agId("1"));
+        assertFalse(eventStream.hasNext());
+    }
+
+    @Test
     public void testEventsAppending() {
         final List<SimpleDomainEvent> domainEvents = new ArrayList<SimpleDomainEvent>();
         domainEvents.add(new SimpleDomainEvent(1, agId("1"), "val"));
 
         orientEventStore.appendEvents("Doc", stream(domainEvents));
 
-        ORecordIteratorClass<ODocument> iteratorClass = database.browseClass(OrientEventStore.DOMAIN_EVENT_CLASS,
+        ORecordIteratorClass<ODocument> iteratorClass = database.browseClass(DomainEventEntry.DOMAIN_EVENT_CLASS,
                 false);
         assertTrue(iteratorClass.hasNext());
         final ODocument eventDocument = iteratorClass.next();
@@ -78,14 +85,14 @@ public class OrientEventStoreTest {
 
         orientEventStore.appendEvents("Doc", stream(domainEvents));
 
-        ORecordIteratorClass<ODocument> iteratorClass = database.browseClass(OrientEventStore.DOMAIN_EVENT_CLASS,
+        ORecordIteratorClass<ODocument> iteratorClass = database.browseClass(DomainEventEntry.DOMAIN_EVENT_CLASS,
                 false);
         assertTrue(iteratorClass.hasNext());
         final ODocument eventDocument = iteratorClass.next();
         final OClass eventClass = eventDocument.getSchemaClass();
 
         assertNotNull(eventClass);
-        assertEquals(OrientEventStore.DOMAIN_EVENT_CLASS, eventClass.getName());
+        assertEquals(DomainEventEntry.DOMAIN_EVENT_CLASS, eventClass.getName());
 
         final OProperty aggregateTypeProperty = eventClass.getProperty("aggregateType");
         assertNotNull(aggregateTypeProperty);

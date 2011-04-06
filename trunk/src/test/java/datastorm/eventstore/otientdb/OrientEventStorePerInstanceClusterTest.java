@@ -35,7 +35,7 @@ public class OrientEventStorePerInstanceClusterTest extends OrientEventStoreTest
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"simple.1"});
-        assertClassHasClusterIds(new String[]{"simple.1"}, OrientEventStore.DOMAIN_EVENT_CLASS, database);
+        assertClassHasClusterIds(new String[]{"simple.1"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class OrientEventStorePerInstanceClusterTest extends OrientEventStoreTest
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"docone.1", "doctwo.1"});
-        assertClassHasClusterIds(new String[]{"docone.1", "doctwo.1"}, OrientEventStore.DOMAIN_EVENT_CLASS, database);
+        assertClassHasClusterIds(new String[]{"docone.1", "doctwo.1"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class OrientEventStorePerInstanceClusterTest extends OrientEventStoreTest
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"docone.1", "doctwo.2"});
-        assertClassHasClusterIds(new String[]{"docone.1", "doctwo.2"}, OrientEventStore.DOMAIN_EVENT_CLASS, database);
+        assertClassHasClusterIds(new String[]{"docone.1", "doctwo.2"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
     }
 
     @Override
@@ -65,6 +65,6 @@ public class OrientEventStorePerInstanceClusterTest extends OrientEventStoreTest
 
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"doc.1", "doc.2"});
-        assertClassHasClusterIds(new String[]{"doc.1", "doc.2"}, OrientEventStore.DOMAIN_EVENT_CLASS, database);
+        assertClassHasClusterIds(new String[]{"doc.1", "doc.2"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
     }
 }
