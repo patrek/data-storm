@@ -36,4 +36,11 @@ final class SimpleDomainEvent extends DomainEvent {
         result = 31 * result + value.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "SimpleDomainEvent{" +
+                "value='" + value + '\'' +
+                "} " + super.toString();
+    }
 }

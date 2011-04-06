@@ -2,6 +2,7 @@ package datastorm.eventstore.otientdb;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Collection;
 
@@ -33,7 +34,7 @@ public class OrientEventStoreSimpleClusterTest extends OrientEventStoreTest {
     public void tearDown() throws Exception {
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"bigcluster"});
-        assertClassHasClusterIds(new String[]{"bigcluster"}, OrientEventStore.DOMAIN_EVENT_CLASS, database);
+        assertClassHasClusterIds(new String[]{"bigcluster"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
         super.tearDown();
     }
 }
