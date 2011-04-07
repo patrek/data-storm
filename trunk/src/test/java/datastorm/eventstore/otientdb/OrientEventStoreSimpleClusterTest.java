@@ -30,11 +30,38 @@ public class OrientEventStoreSimpleClusterTest extends OrientEventStoreTest {
     }
 
     @Override
-    @After
-    public void tearDown() throws Exception {
+    public void testBasicEventsStoring() throws Exception {
+        super.testBasicEventsStoring();
+
         final Collection<String> afterClusters = database.getClusterNames();
         assertClusterNames(beforeClusters, afterClusters, new String[]{"bigcluster"});
         assertClassHasClusterIds(new String[]{"bigcluster"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
-        super.tearDown();
+    }
+
+    @Override
+    public void testEventsFromDifferentTypesWithSameId() {
+        super.testEventsFromDifferentTypesWithSameId();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"bigcluster"});
+        assertClassHasClusterIds(new String[]{"bigcluster"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
+    }
+
+    @Override
+    public void testEventsFromDifferentTypesWithDiffId() {
+        super.testEventsFromDifferentTypesWithDiffId();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"bigcluster"});
+        assertClassHasClusterIds(new String[]{"bigcluster"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
+    }
+
+    @Override
+    public void testEventsWithDiffId() {
+        super.testEventsWithDiffId();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"bigcluster"});
+        assertClassHasClusterIds(new String[]{"bigcluster"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
     }
 }
