@@ -67,7 +67,7 @@ class DomainEventEntry {
     }
 
     protected OClass createClass(ODatabaseDocument databaseDocument, String clusterName) {
-        OSchema schema = databaseDocument.getMetadata().getSchema();
+        final OSchema schema = databaseDocument.getMetadata().getSchema();
         OClass eventClass = schema.getClass(DOMAIN_EVENT_CLASS);
 
         if (eventClass != null) {
@@ -89,6 +89,9 @@ class DomainEventEntry {
                 setNotNull(true);
         eventClass.createProperty(BODY_FIELD, OType.BINARY).setMandatory(true).setNotNull(true);
         eventClass.createProperty(AGGREGATE_TYPE_FIELD, OType.STRING).setMandatory(true).setNotNull(true);
+
+        schema.save();
+
         return eventClass;
     }
 
