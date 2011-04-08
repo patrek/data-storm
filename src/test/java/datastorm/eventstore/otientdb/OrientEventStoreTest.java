@@ -49,6 +49,16 @@ public class OrientEventStoreTest {
     }
 
     @Test
+    public void testSchemaSaving() {
+        final List<SimpleDomainEvent> domainEvents = new ArrayList<SimpleDomainEvent>();
+        domainEvents.add(new SimpleDomainEvent(1, agId("1"), "val"));
+        orientEventStore.appendEvents("Simple", stream(domainEvents));
+        database.close();
+        database.open("admin", "admin");
+        assertTrue(database.getMetadata().getSchema().existsClass(DomainEventEntry.DOMAIN_EVENT_CLASS));
+    }
+
+    @Test
     public void testEventsAppending() {
         final List<SimpleDomainEvent> domainEvents = new ArrayList<SimpleDomainEvent>();
         domainEvents.add(new SimpleDomainEvent(1, agId("1"), "val"));
