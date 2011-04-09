@@ -28,7 +28,7 @@ import java.util.List;
  * By default, the {@link XStreamEventSerializer} is used.
  * <p/>
  * You can specify {@link ClusterResolver} that will be used to identify and create clusters where DomainEvents
- * will be stored.
+ * will be stored. If Cluster Resolver is not specified default cluster will be used.
  *
  * @author EniSh
  */
