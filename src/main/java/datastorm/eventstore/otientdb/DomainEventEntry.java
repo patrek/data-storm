@@ -74,14 +74,18 @@ class DomainEventEntry {
             return eventClass;
         }
 
+        final int clusterId;
+
         if (clusterName != null) {
-            eventClass = schema.createClass(DOMAIN_EVENT_CLASS, databaseDocument.getClusterIdByName(clusterName));
+            clusterId = databaseDocument.getClusterIdByName(clusterName);
             logger.debug("OClass \"{}\" was created and associated with cluster \"{}\".", DOMAIN_EVENT_CLASS,
                     clusterName);
         } else {
-            eventClass = schema.createClass(DOMAIN_EVENT_CLASS);
+            clusterId = databaseDocument.getDefaultClusterId();
             logger.debug("OClass \"{}\" was created.", DOMAIN_EVENT_CLASS);
         }
+
+        eventClass = schema.createClass(DOMAIN_EVENT_CLASS, clusterId);
 
         eventClass.createProperty(AGGREGATE_IDENTIFIER_FIELD, OType.STRING).setMandatory(true).setNotNull(true);
         eventClass.createProperty(SEQUENCE_NUMBER_FIELD, OType.LONG).setMandatory(true).setNotNull(true);
