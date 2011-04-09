@@ -3,13 +3,15 @@ package datastorm.eventstore.otientdb;
 import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.axonframework.domain.*;
 
 import java.util.*;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Utility class that is used to make OrientDb EventStore tests shorter and much more readable by leveraging
@@ -23,10 +25,9 @@ abstract class OrientEventStoreTestUtils {
      * be created from passed in Aggregate IDs. {@link datastorm.eventstore.otientdb.SimpleDomainEvent#getValue()}
      * property will be auto generated.
      *
-     *
      * @param sequenceNumbers Array of sequence numbers.
      * @param ids             Array of Aggregate IDs.
-     * @return                List of {@link SimpleDomainEvent}s created from passed in data.
+     * @return List of {@link SimpleDomainEvent}s created from passed in data.
      */
     public static List<SimpleDomainEvent> createSimpleDomainEvents(int sequenceNumbers[], String[] ids) {
         if (sequenceNumbers.length != ids.length) {
@@ -44,8 +45,9 @@ abstract class OrientEventStoreTestUtils {
 
     /**
      * Converts list of {@link DomainEvent}s into {@link DomainEventStream}.
+     *
      * @param domainEvents List of {@link DomainEvent}s.
-     * @return             {@link DomainEventStream} that contains passed in DomainEvents.
+     * @return {@link DomainEventStream} that contains passed in DomainEvents.
      */
     public static DomainEventStream stream(List<? extends DomainEvent> domainEvents) {
         return new SimpleDomainEventStream(domainEvents);
@@ -73,7 +75,7 @@ abstract class OrientEventStoreTestUtils {
      * Original list will be untouched.
      *
      * @param domainEvents List of {@link DomainEvent}s to be sorted.
-     * @return             Sorted copy of {@link DomainEvent}s list.
+     * @return Sorted copy of {@link DomainEvent}s list.
      */
     public static List<? extends DomainEvent> sortBySequenceNumber(List<? extends DomainEvent> domainEvents) {
         List<? extends DomainEvent> copiedEvents = new ArrayList<DomainEvent>(domainEvents);
@@ -89,8 +91,8 @@ abstract class OrientEventStoreTestUtils {
     /**
      * Creates {@link AggregateIdentifier} form its String presentation.
      *
-     * @param   id  String presentation of {@link AggregateIdentifier}.
-     * @return  Instance of {@link AggregateIdentifier}.
+     * @param id String presentation of {@link AggregateIdentifier}.
+     * @return Instance of {@link AggregateIdentifier}.
      */
     public static AggregateIdentifier agId(String id) {
         return new StringAggregateIdentifier(id);
@@ -98,9 +100,10 @@ abstract class OrientEventStoreTestUtils {
 
     /**
      * Checks that cluster names that are passed in as array of strings were added.
-     * @param beforeClusters  List of clusters before operation.
-     * @param afterClusters   List of clusters after operation.
-     * @param clusterNames    Names of clusters that should be added.
+     *
+     * @param beforeClusters List of clusters before operation.
+     * @param afterClusters  List of clusters after operation.
+     * @param clusterNames   Names of clusters that should be added.
      */
     public static void assertClusterNames(Collection<String> beforeClusters,
                                           Collection<String> afterClusters, String[] clusterNames) {
@@ -119,13 +122,90 @@ abstract class OrientEventStoreTestUtils {
      * @param database             Database where class should be defined.
      */
     public static void assertClassHasClusterIds(String[] expectedClusterNames, String className,
-                                         ODatabaseDocument database) {
+                                                ODatabaseDocument database) {
         final OClass oClass = database.getMetadata().getSchema().getClass(className);
         assertEquals(expectedClusterNames.length, oClass.getClusterIds().length);
         final List<Integer> clusterIds = Ints.asList(oClass.getClusterIds());
-        for(final String expectedClusterName : expectedClusterNames) {
+        for (final String expectedClusterName : expectedClusterNames) {
             int expectedClusterId = database.getClusterIdByName(expectedClusterName);
             assertTrue(clusterIds.contains(expectedClusterId));
         }
+    }
+
+    public static void assertDomainEventSchema(OClass eventClass) {
+        assertNotNull(eventClass);
+        assertEquals(DomainEventEntry.DOMAIN_EVENT_CLASS, eventClass.getName());
+
+        final OProperty aggregateTypeProperty = eventClass.getProperty("aggregateType");
+        assertNotNull(aggregateTypeProperty);
+        assertTrue(aggregateTypeProperty.isMandatory());
+        assertTrue(aggregateTypeProperty.isNotNull());
+        assertEquals(OType.STRING, aggregateTypeProperty.getType());
+
+        final OProperty aggregateIdentifierProperty = eventClass.getProperty("aggregateIdentifier");
+        assertNotNull(aggregateIdentifierProperty);
+        assertTrue(aggregateIdentifierProperty.isMandatory());
+        assertTrue(aggregateIdentifierProperty.isNotNull());
+        assertEquals(OType.STRING, aggregateIdentifierProperty.getType());
+
+        final OProperty sequenceNumberProperty = eventClass.getProperty("sequenceNumber");
+        assertNotNull(sequenceNumberProperty);
+        assertTrue(sequenceNumberProperty.isMandatory());
+        assertTrue(sequenceNumberProperty.isNotNull());
+        assertEquals(OType.LONG, sequenceNumberProperty.getType());
+
+        final OProperty timestampProperty = eventClass.getProperty("timestamp");
+        assertNotNull(timestampProperty);
+        assertTrue(timestampProperty.isMandatory());
+        assertTrue(timestampProperty.isNotNull());
+        assertEquals("29", timestampProperty.getMin());
+        assertEquals("29", timestampProperty.getMax());
+        assertEquals(OType.STRING, timestampProperty.getType());
+
+        final OProperty bodyProperty = eventClass.getProperty("body");
+        assertNotNull(bodyProperty);
+        assertTrue(bodyProperty.isMandatory());
+        assertTrue(bodyProperty.isNotNull());
+        assertEquals(OType.BINARY, bodyProperty.getType());
+    }
+
+    public static void assertSnapshotEventSchema(OClass eventClass) {
+        assertNotNull(eventClass);
+        assertEquals(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS, eventClass.getName());
+
+        final OProperty aggregateTypeProperty = eventClass.getProperty("aggregateType");
+        assertNotNull(aggregateTypeProperty);
+        assertTrue(aggregateTypeProperty.isMandatory());
+        assertTrue(aggregateTypeProperty.isNotNull());
+        assertEquals(OType.STRING, aggregateTypeProperty.getType());
+
+        final OProperty aggregateIdentifierProperty = eventClass.getProperty("aggregateIdentifier");
+        assertNotNull(aggregateIdentifierProperty);
+        assertTrue(aggregateIdentifierProperty.isMandatory());
+        assertTrue(aggregateIdentifierProperty.isNotNull());
+        assertEquals(OType.STRING, aggregateIdentifierProperty.getType());
+
+        final OProperty sequenceNumberProperty = eventClass.getProperty("sequenceNumber");
+        assertNotNull(sequenceNumberProperty);
+        assertTrue(sequenceNumberProperty.isMandatory());
+        assertTrue(sequenceNumberProperty.isNotNull());
+        assertEquals(OType.LONG, sequenceNumberProperty.getType());
+
+        final OProperty timestampProperty = eventClass.getProperty("timestamp");
+        assertNotNull(timestampProperty);
+        assertTrue(timestampProperty.isMandatory());
+        assertTrue(timestampProperty.isNotNull());
+        assertEquals("29", timestampProperty.getMin());
+        assertEquals("29", timestampProperty.getMax());
+        assertEquals(OType.STRING, timestampProperty.getType());
+
+        final OProperty bodyProperty = eventClass.getProperty("body");
+        assertNotNull(bodyProperty);
+        assertTrue(bodyProperty.isMandatory());
+        assertTrue(bodyProperty.isNotNull());
+        assertEquals(OType.BINARY, bodyProperty.getType());
+
+        final OClass parent = eventClass.getSuperClass();
+        assertDomainEventSchema(parent);
     }
 }

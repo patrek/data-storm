@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -54,7 +55,7 @@ public class OrientEventStoreTest {
         domainEvents.add(new SimpleDomainEvent(1, agId("1"), "val"));
         orientEventStore.appendEvents("Simple", stream(domainEvents));
         database.close();
-        database.open("admin", "admin");
+        database.open("writer", "writer");
         assertTrue(database.getMetadata().getSchema().existsClass(DomainEventEntry.DOMAIN_EVENT_CLASS));
     }
 
@@ -101,40 +102,7 @@ public class OrientEventStoreTest {
         final ODocument eventDocument = iteratorClass.next();
         final OClass eventClass = eventDocument.getSchemaClass();
 
-        assertNotNull(eventClass);
-        assertEquals(DomainEventEntry.DOMAIN_EVENT_CLASS, eventClass.getName());
-
-        final OProperty aggregateTypeProperty = eventClass.getProperty("aggregateType");
-        assertNotNull(aggregateTypeProperty);
-        assertTrue(aggregateTypeProperty.isMandatory());
-        assertTrue(aggregateTypeProperty.isNotNull());
-        assertEquals(OType.STRING, aggregateTypeProperty.getType());
-
-        final OProperty aggregateIdentifierProperty = eventClass.getProperty("aggregateIdentifier");
-        assertNotNull(aggregateIdentifierProperty);
-        assertTrue(aggregateIdentifierProperty.isMandatory());
-        assertTrue(aggregateIdentifierProperty.isNotNull());
-        assertEquals(OType.STRING, aggregateIdentifierProperty.getType());
-
-        final OProperty sequenceNumberProperty = eventClass.getProperty("sequenceNumber");
-        assertNotNull(sequenceNumberProperty);
-        assertTrue(sequenceNumberProperty.isMandatory());
-        assertTrue(sequenceNumberProperty.isNotNull());
-        assertEquals(OType.LONG, sequenceNumberProperty.getType());
-
-        final OProperty timestampProperty = eventClass.getProperty("timestamp");
-        assertNotNull(timestampProperty);
-        assertTrue(timestampProperty.isMandatory());
-        assertTrue(timestampProperty.isNotNull());
-        assertEquals("29", timestampProperty.getMin());
-        assertEquals("29", timestampProperty.getMax());
-        assertEquals(OType.STRING, timestampProperty.getType());
-
-        final OProperty bodyProperty = eventClass.getProperty("body");
-        assertNotNull(bodyProperty);
-        assertTrue(bodyProperty.isMandatory());
-        assertTrue(bodyProperty.isNotNull());
-        assertEquals(OType.BINARY, bodyProperty.getType());
+        assertDomainEventSchema(eventClass);
 
         assertEquals(1, eventClass.getClusterIds().length);
     }

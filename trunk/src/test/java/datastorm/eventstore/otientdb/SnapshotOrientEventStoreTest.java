@@ -1,6 +1,11 @@
 package datastorm.eventstore.otientdb;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.axonframework.domain.DomainEventStream;
 import org.junit.After;
 import org.junit.Before;
@@ -10,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -29,6 +36,21 @@ public class SnapshotOrientEventStoreTest {
     @After
     public void tearDown() throws Exception {
         database.delete();
+    }
+
+    @Test
+    public void testEventSchema() {
+        orientEventStore.appendSnapshotEvent("Simple", new SimpleDomainEvent(1, agId("1"), "val"));
+
+        ORecordIteratorClass<ODocument> iteratorClass = database.browseClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS,
+                false);
+        assertTrue(iteratorClass.hasNext());
+        final ODocument eventDocument = iteratorClass.next();
+        final OClass eventClass = eventDocument.getSchemaClass();
+
+        assertSnapshotEventSchema(eventClass);
+
+        assertEquals(1, eventClass.getClusterIds().length);
     }
 
     @Test
