@@ -17,7 +17,9 @@ import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertDoma
 import static org.junit.Assert.*;
 
 /**
+ *  Integration test for {@link DomainEventEntry} class.
  *
+ *  @author Andrey Lomakin
  */
 public class DomainEventEntryTest {
     private ODatabaseDocumentTx database;
@@ -139,20 +141,6 @@ public class DomainEventEntryTest {
         assertSame(domainEvent, domainEventEntry.getEvent());
         assertEquals("Simple", domainEventEntry.getAggregateType());
     }
-
-    @Test
-    public void testSchemaSaving() {
-        final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
-        final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
-                domainEvent, eventSerializer);
-
-        domainEventEntry.asDocument(database, null);
-        database.close();
-
-        database.open("reader", "reader");
-        assertTrue(database.getMetadata().getSchema().existsClass(DomainEventEntry.DOMAIN_EVENT_CLASS));
-    }
-
 
     private void assertDocumentStructure(SimpleDomainEvent domainEvent, ODocument result) {
         final Set<String> expectedFieldNames = new HashSet<String>(Arrays.asList(

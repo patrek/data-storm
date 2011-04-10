@@ -17,7 +17,9 @@ import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertSnap
 import static org.junit.Assert.*;
 
 /**
+ *  Integration test for {@link SnapshotEventEntry} class.
  *
+ *  @author Andrey Lomakin
  */
 public class SnapshotEventEntryTest {
     private ODatabaseDocumentTx database;
