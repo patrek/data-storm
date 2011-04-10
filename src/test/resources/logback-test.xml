@@ -4,7 +4,7 @@
             <Pattern>%d [%thread] %level %logger - %m%n</Pattern>
         </encoder>
     </appender>
-    <root level="${root-level:-INFO}">
+    <root level="${root-level:-DEBUG}">
         <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>

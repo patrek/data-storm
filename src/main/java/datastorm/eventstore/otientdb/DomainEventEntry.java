@@ -54,7 +54,7 @@ class DomainEventEntry {
 
     ODocument asDocument(ODatabaseDocument databaseDocument, String clusterName) {
         final OClass eventClass = createClass(databaseDocument, clusterName);
-        addClusterToTheClassDefinition(databaseDocument, DOMAIN_EVENT_CLASS, clusterName);
+        addClusterToTheClassDefinition(databaseDocument, eventClass, clusterName);
 
         final ODocument eventDocument = new ODocument(eventClass);
         eventDocument.field(AGGREGATE_IDENTIFIER_FIELD, aggregateIdentifier.asString());
@@ -99,13 +99,12 @@ class DomainEventEntry {
         return eventClass;
     }
 
-    private void addClusterToTheClassDefinition(ODatabaseDocument databaseDocument, String className,
-                                                  String clusterName) {
+    private void addClusterToTheClassDefinition(ODatabaseDocument databaseDocument, OClass eventClass,
+                                                String clusterName) {
         if (clusterName == null) {
             return;
         }
 
-        final OClass eventClass = databaseDocument.getMetadata().getSchema().getClass(className);
         final int clusterId = databaseDocument.getClusterIdByName(clusterName);
 
         if (Ints.contains(eventClass.getClusterIds(), clusterId)) {
@@ -114,7 +113,7 @@ class DomainEventEntry {
 
         eventClass.addClusterIds(clusterId);
         logger.debug("Cluster with name \"{}\" and id [{}] was added to the OClass \"{}\" definition.",
-                new Object[]{clusterName, clusterId, className});
+                new Object[]{clusterName, clusterId, eventClass.getName()});
 
     }
 }

@@ -3,8 +3,6 @@ package datastorm.eventstore.otientdb;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.axonframework.domain.DomainEventStream;
 import org.junit.After;
@@ -57,23 +55,23 @@ public class SnapshotOrientEventStoreTest {
     public void testStoringWithSnapshot() {
         final List<SimpleDomainEvent> firstDomainEvents = createSimpleDomainEvents(new int[] {1, 2},
                         new String[]  {"1", "1"});
-        orientEventStore.appendEvents("Aggregatte", stream(firstDomainEvents));
+        orientEventStore.appendEvents("Aggregate", stream(firstDomainEvents));
 
-        orientEventStore.appendSnapshotEvent("Aggregatte", new SimpleDomainEvent(3, agId("1"), "val"));
+        orientEventStore.appendSnapshotEvent("Aggregate", new SimpleDomainEvent(3, agId("1"), "val"));
 
         final List<SimpleDomainEvent> secondDomainEvents = createSimpleDomainEvents(new int[] {4, 5},
                          new String[]  {"1", "1"});
-        orientEventStore.appendEvents("Aggregatte", stream(secondDomainEvents));
+        orientEventStore.appendEvents("Aggregate", stream(secondDomainEvents));
 
         final SimpleDomainEvent snapshotEvent = new SimpleDomainEvent(6, agId("1"), "val");
 
-        orientEventStore.appendSnapshotEvent("Aggregatte", snapshotEvent);
+        orientEventStore.appendSnapshotEvent("Aggregate", snapshotEvent);
 
         final List<SimpleDomainEvent> thirdDomainEvents = createSimpleDomainEvents(new int[] {7, 8},
                          new String[]  {"1", "1"});
-        orientEventStore.appendEvents("Aggregatte", stream(thirdDomainEvents));
+        orientEventStore.appendEvents("Aggregate", stream(thirdDomainEvents));
 
-        final DomainEventStream readStream = orientEventStore.readEvents("Aggregatte", agId("1"));
+        final DomainEventStream readStream = orientEventStore.readEvents("Aggregate", agId("1"));
 
         final List<SimpleDomainEvent> resultEvents = new ArrayList<SimpleDomainEvent>();
         resultEvents.add(snapshotEvent);
@@ -86,23 +84,23 @@ public class SnapshotOrientEventStoreTest {
     public void testSortingWithSnapshot() {
         final List<SimpleDomainEvent> firstDomainEvents = createSimpleDomainEvents(new int[] {1, 8},
                         new String[]  {"1", "1"});
-        orientEventStore.appendEvents("Aggregatte", stream(firstDomainEvents));
+        orientEventStore.appendEvents("Aggregate", stream(firstDomainEvents));
 
-        orientEventStore.appendSnapshotEvent("Aggregatte", new SimpleDomainEvent(3, agId("1"), "val"));
+        orientEventStore.appendSnapshotEvent("Aggregate", new SimpleDomainEvent(3, agId("1"), "val"));
 
         final List<SimpleDomainEvent> secondDomainEvents = createSimpleDomainEvents(new int[] {4, 7},
                          new String[]  {"1", "1"});
-        orientEventStore.appendEvents("Aggregatte", stream(secondDomainEvents));
+        orientEventStore.appendEvents("Aggregate", stream(secondDomainEvents));
 
         final SimpleDomainEvent snapshotEvent = new SimpleDomainEvent(6, agId("1"), "val");
 
-        orientEventStore.appendSnapshotEvent("Aggregatte", snapshotEvent);
+        orientEventStore.appendSnapshotEvent("Aggregate", snapshotEvent);
 
         final List<SimpleDomainEvent> thirdDomainEvents = createSimpleDomainEvents(new int[] {5, 2},
                          new String[]  {"1", "1"});
-        orientEventStore.appendEvents("Aggregatte", stream(thirdDomainEvents));
+        orientEventStore.appendEvents("Aggregate", stream(thirdDomainEvents));
 
-        final DomainEventStream readStream = orientEventStore.readEvents("Aggregatte", agId("1"));
+        final DomainEventStream readStream = orientEventStore.readEvents("Aggregate", agId("1"));
 
         final List<SimpleDomainEvent> resultEvents = new ArrayList<SimpleDomainEvent>();
         resultEvents.add(snapshotEvent);
@@ -112,4 +110,14 @@ public class SnapshotOrientEventStoreTest {
         assertDomainEventsEquality(resultEvents, readStream);
     }
 
+    @Test
+    public void testEmptyListCorrectlyFetched() {
+        orientEventStore.appendSnapshotEvent("AggregateOne", new SimpleDomainEvent(1, agId("1"), "val"));
+
+        final List<SimpleDomainEvent> resultEvents = createSimpleDomainEvents(new int[] {1, 2},
+                        new String[]  {"2", "2"});
+        orientEventStore.appendEvents("AggregateTwo", stream( resultEvents));
+        final DomainEventStream readStream = orientEventStore.readEvents("AggregateTwo", agId("2"));
+        assertDomainEventsEquality(resultEvents, readStream);
+    }
 }
