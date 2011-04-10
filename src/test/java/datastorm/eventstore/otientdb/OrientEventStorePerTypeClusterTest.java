@@ -14,7 +14,7 @@ import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertClus
  *
  * @author Andrey Lomakin
  */
-public class OrientEventStorePerTypeClusterTest extends OrientEventStoreTest {
+public class OrientEventStorePerTypeClusterTest extends AbstractEventStoreTest {
     private Collection<String> beforeClusters;
 
     @Override
