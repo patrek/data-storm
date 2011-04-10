@@ -25,8 +25,9 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import java.util.*;
 
 /**
- * Thread safe implementation of ODatabaseDocumentTx.
- * Creates own database connection for each thread.
+ * Proxy for {@link ODatabaseDocument}. Delegates all method invocation
+ * to database provided by {@link ThreadedODatabaseDocumentFactory}.
+ * Implemented without reflection.
  *
  * @author EniSh
  *         Date: 02.04.11
@@ -34,27 +35,48 @@ import java.util.*;
 public class ODatabaseDocumentStaticProxy implements ODatabaseDocument {
     private ThreadedODatabaseDocumentFactory databaseFactory;
 
+    /**
+     * @param databaseFactory factory which provide database connection
+     */
     public ODatabaseDocumentStaticProxy(ThreadedODatabaseDocumentFactory databaseFactory) {
         this.databaseFactory = databaseFactory;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ORecordIteratorClass<ODocument> browseClass(String iClassName) {
         return databaseFactory.getThreadLocalDatabase().browseClass(iClassName);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName) {
         throw new UnsupportedOperationException();
@@ -170,9 +192,10 @@ public class ODatabaseDocumentStaticProxy implements ODatabaseDocument {
         throw new UnsupportedOperationException();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <RET extends List<?>> RET query(OQuery<? extends Object> iCommand, Object... iArgs) {
-        throw new UnsupportedOperationException();
+        return (RET) databaseFactory.getThreadLocalDatabase().query(iCommand, iArgs);
     }
 
     @Override
