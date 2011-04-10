@@ -17,7 +17,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
+ *  Integration tests that tests {@link OrientEventStore} implementation
+ *  of {@link org.axonframework.eventstore.SnapshotEventStore} interface.
+ *  This test does not use cluster resolvers.
  *
+ *  @author Andrey Lomakin
  */
 public class SnapshotOrientEventStoreTest {
     protected ODatabaseDocumentTx database;

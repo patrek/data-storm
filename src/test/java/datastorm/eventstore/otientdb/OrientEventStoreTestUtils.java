@@ -15,7 +15,9 @@ import static org.junit.Assert.assertNotNull;
 
 /**
  * Utility class that is used to make OrientDb EventStore tests shorter and much more readable by leveraging
- * static imports composite assertions and factory methods.
+ * static imports. Contains assertions and factory methods.
+ *
+ * @author Andrey Lomakin
  */
 abstract class OrientEventStoreTestUtils {
 
@@ -132,6 +134,13 @@ abstract class OrientEventStoreTestUtils {
         }
     }
 
+    /**
+     * Checks class definition of the document that presents {@link DomainEvent} instance in OrientDb.
+     *
+     * For class description look at {@link DomainEventEntry} JavaDoc.
+     *
+     * @param eventClass Document class to be checked.
+     */
     public static void assertDomainEventSchema(OClass eventClass) {
         assertNotNull(eventClass);
         assertEquals(DomainEventEntry.DOMAIN_EVENT_CLASS, eventClass.getName());
@@ -169,6 +178,13 @@ abstract class OrientEventStoreTestUtils {
         assertEquals(OType.BINARY, bodyProperty.getType());
     }
 
+    /**
+     * Checks class definition of the document that presents Snapshot Event instance in OrientDb.
+     *
+     * For class description look at {@link SnapshotEventEntry} JavaDoc.
+     *
+     * @param eventClass Document class to be checked.
+     */
     public static void assertSnapshotEventSchema(OClass eventClass) {
         assertNotNull(eventClass);
         assertEquals(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS, eventClass.getName());

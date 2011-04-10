@@ -8,6 +8,19 @@ import org.axonframework.eventstore.EventSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Presentation of OrientDb document that will contain Snapshot Event data and also metadata that will
+ * be used in queries to find given Snapshot Event.
+ * <p/>
+ * Instance of given document can be created by calling of {@link #asDocument(ODatabaseDocument, String)} method.
+ * <p/>
+ * Document will have class named {@link #SNAPSHOT_EVENT_CLASS}.
+ * Given class does not have its own fields and is derived form {@link #DOMAIN_EVENT_CLASS}.
+ *
+ * @see DomainEventEntry
+ *
+ * @author Andrey Lomakin
+ */
 class SnapshotEventEntry extends DomainEventEntry {
     private static final Logger logger = LoggerFactory.getLogger(SnapshotEventEntry.class);
 
@@ -16,10 +29,23 @@ class SnapshotEventEntry extends DomainEventEntry {
      */
     static final String SNAPSHOT_EVENT_CLASS = "AggregateSnapshot";
 
+    /**
+     * {@inheritDoc}
+     */
     SnapshotEventEntry(String aggregateType, DomainEvent event, EventSerializer eventSerializer) {
         super(aggregateType, event, eventSerializer);
     }
 
+    /**
+     * Creates document class that presents Snapshot Event data and metadata.
+     * <p/>
+     * Class does not have its own fields and simple extends {@link #DOMAIN_EVENT_CLASS}.
+     *
+     * @param databaseDocument Current database instance.
+     * @param clusterName      Cluster name where document is going to be stored. Can be null.
+     *                         In last case default cluster should be used.
+     * @return Document class that presents Snapshot Event and auxiliary metadata.
+     */
     @Override
     protected OClass createClass(ODatabaseDocument databaseDocument, String clusterName) {
         final OSchema schema = databaseDocument.getMetadata().getSchema();

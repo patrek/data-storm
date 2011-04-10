@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Creates the same cluster for Aggregate.
+ * Creates the same physical  cluster for any Aggregate.
  * Cluster name is passed in as constructor parameter.
  *
  * @author Andrey Lomakin

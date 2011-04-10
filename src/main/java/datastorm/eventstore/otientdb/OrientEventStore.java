@@ -3,6 +3,7 @@ package datastorm.eventstore.otientdb;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.axonframework.domain.AggregateIdentifier;
@@ -189,6 +190,8 @@ public class OrientEventStore implements SnapshotEventStore {
         } else {
             eventDocument.save();
         }
+        final OSchema schema = database.getMetadata().getSchema();
+        schema.save();
 
         if (aggregateCluster != null) {
             logger.debug("Event for aggregate type \"{}\", id [{}] and sequence number {} was saved to the cluster \"{}\".",

@@ -4,7 +4,7 @@ import org.axonframework.domain.AggregateIdentifier;
 import org.axonframework.domain.DomainEvent;
 
 /**
- *
+ *  Domain Event class that will be used for {@link OrientEventStore} tests.
  */
 final class SimpleDomainEvent extends DomainEvent {
     private String value;

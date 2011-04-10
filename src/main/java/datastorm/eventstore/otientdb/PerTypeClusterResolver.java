@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Creates cluster for each new type of the passed in Aggregate.
+ * Creates physical cluster for each new type of the passed in Aggregate.
  *
  * @author Andrey Lomakin
  */
