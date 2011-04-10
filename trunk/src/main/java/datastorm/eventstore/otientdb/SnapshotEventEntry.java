@@ -22,22 +22,24 @@ class SnapshotEventEntry extends DomainEventEntry {
 
     @Override
     protected OClass createClass(ODatabaseDocument databaseDocument, String clusterName) {
-        OSchema schema = databaseDocument.getMetadata().getSchema();
+        final OSchema schema = databaseDocument.getMetadata().getSchema();
         OClass eventClass = schema.getClass(SNAPSHOT_EVENT_CLASS);
 
         if (eventClass != null) {
             return eventClass;
         }
 
+        final int clusterId;
         if (clusterName != null) {
-            eventClass = schema.createClass(SNAPSHOT_EVENT_CLASS, databaseDocument.getClusterIdByName(clusterName));
+            clusterId = databaseDocument.getClusterIdByName(clusterName);
             logger.debug("OClass \"{}\" was created and associated with cluster \"{}\".", SNAPSHOT_EVENT_CLASS,
                     clusterName);
         } else {
-            eventClass = schema.createClass(SNAPSHOT_EVENT_CLASS);
+            clusterId = databaseDocument.getDefaultClusterId();
             logger.debug("OClass \"{}\" was created.", SNAPSHOT_EVENT_CLASS);
         }
 
+        eventClass = schema.createClass(SNAPSHOT_EVENT_CLASS, clusterId);
         final OClass parentClass = super.createClass(databaseDocument, clusterName);
         eventClass.setSuperClass(parentClass);
         return eventClass;

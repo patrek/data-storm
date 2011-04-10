@@ -13,13 +13,13 @@ import org.junit.Test;
 import java.util.*;
 
 import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.agId;
-import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertDomainEventSchema;
+import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertSnapshotEventSchema;
 import static org.junit.Assert.*;
 
 /**
  *
  */
-public class DomainEventEntryTest {
+public class SnapshotEventEntryTest {
     private ODatabaseDocumentTx database;
     private EventSerializer eventSerializer = new XStreamEventSerializer();
 
@@ -37,20 +37,20 @@ public class DomainEventEntryTest {
     @Test
     public void testDocumentAndClassCreatedWithCluster() {
         final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
-        final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
+        final SnapshotEventEntry snapshotEventEntry = new SnapshotEventEntry("Simple",
                 domainEvent, eventSerializer);
 
         final int expectedClusterId = database.addPhysicalCluster("cluster");
         assertTrue(expectedClusterId != -1);
 
-        final ODocument result = domainEventEntry.asDocument(database, "cluster");
+        final ODocument result = snapshotEventEntry.asDocument(database, "cluster");
 
         assertNotNull(result);
 
         assertDocumentStructure(domainEvent, result);
 
         final OClass eventClass = result.getSchemaClass();
-        assertDomainEventSchema(eventClass);
+        assertSnapshotEventSchema(eventClass);
 
         assertEquals(1, eventClass.getClusterIds().length);
 
@@ -60,17 +60,17 @@ public class DomainEventEntryTest {
     @Test
     public void testDocumentAndClassCreatedWithoutCluster() {
         final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
-        final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
+        final SnapshotEventEntry snapshotEventEntry = new SnapshotEventEntry("Simple",
                 domainEvent, eventSerializer);
 
-        final ODocument result = domainEventEntry.asDocument(database, null);
+        final ODocument result = snapshotEventEntry.asDocument(database, null);
 
         assertNotNull(result);
 
         assertDocumentStructure(domainEvent, result);
 
         final OClass eventClass = result.getSchemaClass();
-        assertDomainEventSchema(eventClass);
+        assertSnapshotEventSchema(eventClass);
 
         assertEquals(1, eventClass.getClusterIds().length);
 
@@ -81,18 +81,18 @@ public class DomainEventEntryTest {
     @Test
     public void testDocumentAndClassCreationClassExist() {
         final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
-        final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
+        final SnapshotEventEntry snapshotEventEntry = new SnapshotEventEntry("Simple",
                 domainEvent, eventSerializer);
 
-        domainEventEntry.asDocument(database, null);
-        final ODocument result = domainEventEntry.asDocument(database, null);
+        snapshotEventEntry.asDocument(database, null);
+        final ODocument result = snapshotEventEntry.asDocument(database, null);
 
         assertNotNull(result);
 
         assertDocumentStructure(domainEvent, result);
 
         final OClass eventClass = result.getSchemaClass();
-        assertDomainEventSchema(eventClass);
+        assertSnapshotEventSchema(eventClass);
 
         assertEquals(1, eventClass.getClusterIds().length);
 
@@ -104,7 +104,7 @@ public class DomainEventEntryTest {
     @Test
     public void testDocumentAndClassCreationClassExistInAnotherCluster() {
         final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
-        final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
+        final SnapshotEventEntry snapshotEventEntry = new SnapshotEventEntry("Simple",
                 domainEvent, eventSerializer);
 
         final int expectedFirstClusterId = database.addPhysicalCluster("FirstCluster");
@@ -113,15 +113,15 @@ public class DomainEventEntryTest {
         assertTrue(expectedFirstClusterId != -1);
         assertTrue(expectedSecondClusterId != -1);
 
-        domainEventEntry.asDocument(database, "FirstCluster");
-        final ODocument result = domainEventEntry.asDocument(database, "SecondCluster");
+        snapshotEventEntry.asDocument(database, "FirstCluster");
+        final ODocument result = snapshotEventEntry.asDocument(database, "SecondCluster");
 
         assertNotNull(result);
 
         assertDocumentStructure(domainEvent, result);
 
         final OClass eventClass = result.getSchemaClass();
-        assertDomainEventSchema(eventClass);
+        assertSnapshotEventSchema(eventClass);
 
         assertEquals(2, eventClass.getClusterIds().length);
 
@@ -130,52 +130,29 @@ public class DomainEventEntryTest {
         assertTrue(Ints.contains(eventClass.getClusterIds(), expectedSecondClusterId));
     }
 
-    @Test
-    public void testGetters() {
-        final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
-        final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
-                domainEvent, eventSerializer);
-
-        assertSame(domainEvent, domainEventEntry.getEvent());
-        assertEquals("Simple", domainEventEntry.getAggregateType());
-    }
-
-    @Test
-    public void testSchemaSaving() {
-        final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
-        final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
-                domainEvent, eventSerializer);
-
-        domainEventEntry.asDocument(database, null);
-        database.close();
-
-        database.open("reader", "reader");
-        assertTrue(database.getMetadata().getSchema().existsClass(DomainEventEntry.DOMAIN_EVENT_CLASS));
-    }
-
 
     private void assertDocumentStructure(SimpleDomainEvent domainEvent, ODocument result) {
         final Set<String> expectedFieldNames = new HashSet<String>(Arrays.asList(
-                DomainEventEntry.AGGREGATE_IDENTIFIER_FIELD,
-                DomainEventEntry.SEQUENCE_NUMBER_FIELD,
-                DomainEventEntry.AGGREGATE_TYPE_FIELD,
-                DomainEventEntry.BODY_FIELD,
-                DomainEventEntry.TIMESTAMP_FIELD
+                SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD,
+                SnapshotEventEntry.SEQUENCE_NUMBER_FIELD,
+                SnapshotEventEntry.AGGREGATE_TYPE_FIELD,
+                SnapshotEventEntry.BODY_FIELD,
+                SnapshotEventEntry.TIMESTAMP_FIELD
         ));
 
         final Set<String> fieldNames = result.fieldNames();
         assertEquals(expectedFieldNames, fieldNames);
 
         final Map<String, Object> expectedFieldValues = new HashMap<String, Object>();
-        expectedFieldValues.put(DomainEventEntry.AGGREGATE_IDENTIFIER_FIELD, "1");
-        expectedFieldValues.put(DomainEventEntry.SEQUENCE_NUMBER_FIELD, 1L);
-        expectedFieldValues.put(DomainEventEntry.AGGREGATE_TYPE_FIELD, "Simple");
-        expectedFieldValues.put(DomainEventEntry.TIMESTAMP_FIELD, domainEvent.getTimestamp().toString());
-        expectedFieldValues.put(DomainEventEntry.BODY_FIELD, eventSerializer.serialize(domainEvent));
+        expectedFieldValues.put(SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD, "1");
+        expectedFieldValues.put(SnapshotEventEntry.SEQUENCE_NUMBER_FIELD, 1L);
+        expectedFieldValues.put(SnapshotEventEntry.AGGREGATE_TYPE_FIELD, "Simple");
+        expectedFieldValues.put(SnapshotEventEntry.TIMESTAMP_FIELD, domainEvent.getTimestamp().toString());
+        expectedFieldValues.put(SnapshotEventEntry.BODY_FIELD, eventSerializer.serialize(domainEvent));
 
         for (String fieldName : fieldNames) {
             final Object fieldValue = result.field(fieldName);
-            if (!fieldName.equals(DomainEventEntry.BODY_FIELD)) {
+            if (!fieldName.equals(SnapshotEventEntry.BODY_FIELD)) {
                 assertEquals(expectedFieldValues.get(fieldName), fieldValue);
             } else {
                 assertArrayEquals((byte[]) expectedFieldValues.get(fieldName), (byte[]) fieldValue);
