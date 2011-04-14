@@ -3,7 +3,6 @@ package datastorm.eventstore.otientdb;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.sun.istack.internal.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -137,7 +136,7 @@ public abstract class AbstractODatabaseDocumentProxyTest {
         ArrayList<Object[]> parameters = new ArrayList<Object[]>();
         parameters.addAll(Collections2.transform(Arrays.asList(ODatabaseDocument.class.getMethods()), new Function<Object, Object[]>() {
             @Override
-            public Object[] apply(@Nullable Object o) {
+            public Object[] apply(Object o) {
                 return new Object[]{o};
             }
         }));
