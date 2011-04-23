@@ -51,13 +51,7 @@
         <dependency>
             <groupId>org.axonframework</groupId>
             <artifactId>axon-core</artifactId>
-            <version>1.0-rc3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.axonframework</groupId>
-            <artifactId>axon-integrationtests</artifactId>
-            <version>1.0-rc3</version>
+            <version>1.0</version>
         </dependency>
 
         <!--OrientDb dependencies-->

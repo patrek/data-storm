@@ -5,6 +5,7 @@ import com.google.common.collect.Collections2;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.axonframework.domain.AggregateIdentifier;
 import org.axonframework.domain.DomainEvent;
@@ -39,6 +40,7 @@ public class OrientEventStore implements SnapshotEventStore {
 
     private ODatabaseDocument database;
     private ClusterResolver clusterResolver;
+    private boolean leaveLastSnapshotOnly = true;
 
     public OrientEventStore() {
         eventSerializer = new XStreamEventSerializer();
@@ -117,8 +119,16 @@ public class OrientEventStore implements SnapshotEventStore {
      */
     @Override
     public void appendSnapshotEvent(String type, DomainEvent snapshotEvent) {
+        if (leaveLastSnapshotOnly) {
+            dropSnapshots(type, snapshotEvent.getAggregateIdentifier());
+        }
+
         final SnapshotEventEntry domainEventEntry = new SnapshotEventEntry(type, snapshotEvent, eventSerializer);
         storeEventEntry(domainEventEntry);
+    }
+
+    public void setLeaveLastSnapshotOnly(boolean leaveLastSnapshotOnly) {
+        this.leaveLastSnapshotOnly = leaveLastSnapshotOnly;
     }
 
     /**
@@ -139,6 +149,31 @@ public class OrientEventStore implements SnapshotEventStore {
         this.clusterResolver = clusterResolver;
     }
 
+    private void dropSnapshots(String aggregateType, AggregateIdentifier aggregateIdentifier) {
+        if (!database.getMetadata().getSchema().existsClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS)) {
+            return;
+        }
+
+        final String command;
+
+        String aggregateCluster = null;
+        if (clusterResolver != null) {
+            aggregateCluster = clusterResolver.resolveClusterForAggregate(aggregateType, aggregateIdentifier);
+        }
+
+        if (aggregateCluster != null) {
+            command = "delete * from cluster:" + aggregateCluster +
+                    " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
+                    " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'" +
+                    " and @class = '" + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS + "'";
+        } else {
+            command = "delete * from " + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS +
+                    " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
+                    " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'";
+        }
+        database.command(new OCommandSQL(command)).execute();
+    }
+
     private DomainEvent loadLastSnapshotEvent(String aggregateType, AggregateIdentifier aggregateIdentifier) {
         if (!database.getMetadata().getSchema().existsClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS)) {
             return null;
@@ -152,15 +187,15 @@ public class OrientEventStore implements SnapshotEventStore {
         final String query;
         if (aggregateCluster != null) {
             query = "select * from cluster:" + aggregateCluster +
-                    " where " + DomainEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
-                    " and "+ DomainEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'" +
-                    " and @class = '" + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS +"'" +
-                    " order by " + DomainEventEntry.SEQUENCE_NUMBER_FIELD + " desc limit 1";
+                    " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
+                    " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'" +
+                    " and @class = '" + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS + "'" +
+                    " order by " + SnapshotEventEntry.SEQUENCE_NUMBER_FIELD + " desc limit 1";
         } else {
             query = "select * from " + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS +
-                    " where " + DomainEventEntry.AGGREGATE_IDENTIFIER_FIELD +  " = '" + aggregateIdentifier.asString() + "'" +
-                    " and " + DomainEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'" +
-                    " order by "+ DomainEventEntry.SEQUENCE_NUMBER_FIELD + " desc limit 1";
+                    " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
+                    " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'" +
+                    " order by " + SnapshotEventEntry.SEQUENCE_NUMBER_FIELD + " desc limit 1";
         }
 
         final List<ODocument> queryResult =
@@ -185,7 +220,7 @@ public class OrientEventStore implements SnapshotEventStore {
 
         final ODocument eventDocument = domainEventEntry.asDocument(database, aggregateCluster);
 
-        if(aggregateCluster != null) {
+        if (aggregateCluster != null) {
             eventDocument.save(aggregateCluster);
         } else {
             eventDocument.save();
