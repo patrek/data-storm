@@ -31,6 +31,10 @@ import java.util.List;
  * <p/>
  * You can specify {@link ClusterResolver} that will be used to identify and create clusters where DomainEvents
  * will be stored. If Cluster Resolver is not specified default cluster will be used.
+ * <p/>
+ * If you would like to decrease space that will be consumed for events and in some way improve performance you can
+ * set uo flag {#setLeaveLastSnapshotOnly} to true. This flag forces removing of old snapshot events when new one is
+ * added.
  *
  * @author EniSh
  */
@@ -71,6 +75,7 @@ public class OrientEventStore implements SnapshotEventStore {
      */
     public DomainEventStream readEvents(String type, AggregateIdentifier aggregateIdentifier) {
         if (!database.getMetadata().getSchema().existsClass(DomainEventEntry.DOMAIN_EVENT_CLASS)) {
+            logger.debug("Domain event class does not exist, returning empty event stream.");
             return new SimpleDomainEventStream();
         }
 
@@ -127,8 +132,24 @@ public class OrientEventStore implements SnapshotEventStore {
         storeEventEntry(domainEventEntry);
     }
 
+    /**
+     * Sets whether old snapshots should be removed when new one is appended.
+     * This option will improve disk size consumption and overall performance by decreasing of items that are needed
+     * to be processed.
+     *
+     * @param leaveLastSnapshotOnly Flag value.
+     */
     public void setLeaveLastSnapshotOnly(boolean leaveLastSnapshotOnly) {
         this.leaveLastSnapshotOnly = leaveLastSnapshotOnly;
+    }
+
+    /**
+     * Indicates whether old snapshots should be removed when new one is appended.
+     *
+     * @return Flag value.
+     */
+    public boolean isLeaveLastSnapshotOnly() {
+        return leaveLastSnapshotOnly;
     }
 
     /**
@@ -151,6 +172,7 @@ public class OrientEventStore implements SnapshotEventStore {
 
     private void dropSnapshots(String aggregateType, AggregateIdentifier aggregateIdentifier) {
         if (!database.getMetadata().getSchema().existsClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS)) {
+            logger.debug("Snapshot event class does not exist, nothing will be removed, just exit.");
             return;
         }
 
@@ -171,11 +193,14 @@ public class OrientEventStore implements SnapshotEventStore {
                     " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
                     " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'";
         }
-        database.command(new OCommandSQL(command)).execute();
+
+        final int removedSnapshots = database.command(new OCommandSQL(command)).<Number>execute().intValue();
+        logger.debug("Command \"{}\" was performed and {} snapshot events were removed.", command, removedSnapshots);
     }
 
     private DomainEvent loadLastSnapshotEvent(String aggregateType, AggregateIdentifier aggregateIdentifier) {
         if (!database.getMetadata().getSchema().existsClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS)) {
+            logger.debug("Snapshot event class does not exist, nothing will be returned, just exit.");
             return null;
         }
 
