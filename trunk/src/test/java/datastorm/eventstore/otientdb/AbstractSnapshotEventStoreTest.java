@@ -138,4 +138,24 @@ public abstract class AbstractSnapshotEventStoreTest {
         database.open("writer", "writer");
         assertTrue(database.getMetadata().getSchema().existsClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS));
     }
+
+    @Test
+    public void testOldSnapshotsAreRemoved() {
+        orientEventStore.setLeaveLastSnapshotOnly(true);
+        orientEventStore.appendSnapshotEvent("Simple", new SimpleDomainEvent(1, agId("1"), "val"));
+        orientEventStore.appendSnapshotEvent("Simple", new SimpleDomainEvent(2, agId("1"), "val"));
+
+        long snapshotCounts = database.countClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS);
+        assertEquals(1, snapshotCounts);
+    }
+
+    @Test
+    public void testOldSnapshotsAreNotRemoved() {
+        orientEventStore.setLeaveLastSnapshotOnly(true);
+        orientEventStore.appendSnapshotEvent("Simple", new SimpleDomainEvent(1, agId("1"), "val"));
+        orientEventStore.appendSnapshotEvent("Simple", new SimpleDomainEvent(2, agId("1"), "val"));
+
+        long snapshotCounts = database.countClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS);
+        assertEquals(1, snapshotCounts);
+    }
 }
