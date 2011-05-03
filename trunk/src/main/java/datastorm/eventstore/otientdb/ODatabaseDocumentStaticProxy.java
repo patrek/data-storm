@@ -74,6 +74,11 @@ public class ODatabaseDocumentStaticProxy implements ODatabaseDocument {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public void reload(ORecordInternal<?> oRecordInternal, String s, boolean b) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -134,16 +139,6 @@ public class ODatabaseDocumentStaticProxy implements ODatabaseDocument {
 
     @Override
     public OUser getUser() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void reload(ORecordInternal<?> iObject) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void reload(ORecordInternal<?> iObject, String iFetchPlan) {
         throw new UnsupportedOperationException();
     }
 
@@ -275,11 +270,6 @@ public class ODatabaseDocumentStaticProxy implements ODatabaseDocument {
 
     @Override
     public void close() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getId() {
         throw new UnsupportedOperationException();
     }
 
