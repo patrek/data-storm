@@ -14,23 +14,24 @@
     </bean>
 
     <bean id="threadedODatabaseDocumentFactory" class="datastorm.eventstore.otientdb.ThreadedODatabaseDocumentFactory">
-        <constructor-arg index="0" value="local:/database/benchmarkorient"/>
-        <!--<constructor-arg index="0" value="remote:localhost/benchmarkorient"/>-->
+        <!--<constructor-arg index="0" value="local:/database/benchmarkorient"/>-->
+        <constructor-arg index="0" value="remote:localhost/benchmarkorient"/>
         <constructor-arg index="1" value="admin"/>
         <constructor-arg index="2" value="admin"/>
     </bean>
 
-    <bean id="oDocumentDatabase" class="datastorm.eventstore.otientdb.ODatabaseDocumentStaticProxy">
-        <constructor-arg index="0" ref="threadedODatabaseDocumentFactory"/>
-    </bean>
-
-    <!--<bean id="dynamicProxyFactory" class="datastorm.eventstore.otientdb.ODatabaseDocumentDynamicProxyFactory"/>-->
-
-    <!--<bean id="oDocumentDatabase" class="com.orientechnologies.orient.core.db.document.ODatabaseDocument"-->
-    <!--factory-bean="dynamicProxyFactory"-->
-    <!--factory-method="getInstance">-->
+    <!--<bean id="oDocumentDatabase" class="datastorm.eventstore.otientdb.ODatabaseDocumentStaticProxy">-->
     <!--<constructor-arg index="0" ref="threadedODatabaseDocumentFactory"/>-->
     <!--</bean>-->
+
+    <bean id="dynamicProxyFactory"
+          class="datastorm.eventstore.otientdb.transactions.ODatabaseDocumentDynamicProxyFactory"/>
+
+    <bean id="oDocumentDatabase" class="com.orientechnologies.orient.core.db.document.ODatabaseDocument"
+          factory-bean="dynamicProxyFactory"
+          factory-method="getInstance">
+        <constructor-arg index="0" ref="threadedODatabaseDocumentFactory"/>
+    </bean>
 
     <bean id="clusterResolver"
           class="datastorm.eventstore.otientdb.PerInstanceClusterResolver">

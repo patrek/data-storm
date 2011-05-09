@@ -1,29 +1,49 @@
 package datastorm.spring;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import datastorm.eventstore.otientdb.ThreadedODatabaseDocumentFactory;
+import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import datastorm.eventstore.otientdb.ConnectionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
+ * <p> {@link org.springframework.transaction.PlatformTransactionManager} implementation for OrientDb </p>
+ *
  * @author EniSh
- *         Date: 10.04.11
  */
 public class OrientTransactionManager extends AbstractPlatformTransactionManager {
-    private ThreadedODatabaseDocumentFactory databaseFactory;
+    private ConnectionManager connectionManager;
+
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+    }
 
     @Override
     protected Object doGetTransaction() throws TransactionException {
-        return new OrientTransactionObject(databaseFactory.getThreadLocalDatabase());
+        OrientTransactionObject transactionObject = new OrientTransactionObject();
+        ODatabaseDocument connection = (ODatabaseDocument) TransactionSynchronizationManager.getResource(connectionManager);
+        if (connection != null) {
+            transactionObject.setDatabase(connection, false);
+        }
+        return transactionObject;
     }
 
     @Override
     protected void doBegin(Object transaction, TransactionDefinition definition) throws TransactionException {
         OrientTransactionObject txObj = (OrientTransactionObject) transaction;
         try {
+            if (txObj.getDatabase() == null) {
+                txObj.setDatabase(connectionManager.getNewConnection(), true);
+            }
+
             txObj.getDatabase().begin();
+
+            if (txObj.isConnectionNew()) {
+                TransactionSynchronizationManager.bindResource(connectionManager, txObj.getDatabase());
+            }
         } catch (RuntimeException e) {
             //TODO translate e
         }
@@ -59,15 +79,42 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
         }
     }
 
+    @Override
+    protected void doCleanupAfterCompletion(Object transaction) {
+        OrientTransactionObject tx = (OrientTransactionObject) transaction;
+        if (tx.isConnectionNew()) {
+            TransactionSynchronizationManager.unbindResource(connectionManager);
+            tx.getDatabase().close();
+        }
+    }
+
+    @Override
+    protected boolean isExistingTransaction(Object transaction) throws TransactionException {
+        return ((OrientTransactionObject) transaction).hasTransaction();
+    }
+
     private class OrientTransactionObject {
         private ODatabaseDocument database;
+        private boolean connectionNew;
 
-        private OrientTransactionObject(ODatabaseDocument database) {
-            this.database = database;
+        private OrientTransactionObject() {
         }
 
         public ODatabaseDocument getDatabase() {
             return database;
+        }
+
+        public boolean hasTransaction() {
+            return (database != null) && !(database.getTransaction() instanceof OTransactionNoTx);
+        }
+
+        public void setDatabase(final ODatabaseDocument database, boolean newConnection) {
+            this.database = database;
+            this.connectionNew = newConnection;
+        }
+
+        public boolean isConnectionNew() {
+            return connectionNew;
         }
     }
 }

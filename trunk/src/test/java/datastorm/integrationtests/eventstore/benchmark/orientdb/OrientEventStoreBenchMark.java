@@ -1,6 +1,7 @@
 package datastorm.integrationtests.eventstore.benchmark.orientdb;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import datastorm.eventstore.otientdb.OrientEventStore;
 import datastorm.integrationtests.eventstore.benchmark.AbstractEventStoreBenchmark;
 import org.axonframework.domain.UUIDAggregateIdentifier;
@@ -25,6 +26,7 @@ public class OrientEventStoreBenchMark extends AbstractEventStoreBenchmark {
 
     @Override
     protected void prepareEventStore() {
+        database.query(new OSQLSynchQuery<Object>("DELETE FROM DomainEvent"));
     }
 
     @Override
@@ -37,12 +39,12 @@ public class OrientEventStoreBenchMark extends AbstractEventStoreBenchmark {
         @Override
         public void run() {
             UUIDAggregateIdentifier aggregateId = new UUIDAggregateIdentifier();
-            database.begin();
             int eventSequence = 0;
             for (int t = 0; t < getTransactionCount(); t++) {
+                database.begin();
                 eventSequence = saveAndLoadLargeNumberOfEvents(aggregateId, eventStore, eventSequence);
+                database.commit();
             }
-            database.commit();
         }
     }
 }
