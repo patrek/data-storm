@@ -1,5 +1,6 @@
 package datastorm.eventstore.otientdb;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -32,10 +33,14 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractSnapshotEventStoreTest {
     protected ODatabaseDocumentTx database;
     protected OrientEventStore orientEventStore;
+    private boolean oldKeepOpen;
 
     @Before
     public void setUp() throws Exception {
-        database = new ODatabaseDocumentTx("memory:default");
+        oldKeepOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
+        OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
+
+        database = new ODatabaseDocumentTx("local:target/default");
         database.create();
         orientEventStore = new OrientEventStore();
         orientEventStore.setDatabase(database);
@@ -44,6 +49,8 @@ public abstract class AbstractSnapshotEventStoreTest {
     @After
     public void tearDown() throws Exception {
         database.delete();
+
+        OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldKeepOpen);
     }
 
     @Test
@@ -135,7 +142,7 @@ public abstract class AbstractSnapshotEventStoreTest {
     public void testSchemaSaving() {
         orientEventStore.appendSnapshotEvent("Simple", new SimpleDomainEvent(1, agId("1"), "val"));
         database.close();
-        database.open("writer", "writer");
+        database.open("admin", "admin");
         assertTrue(database.getMetadata().getSchema().existsClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS));
     }
 

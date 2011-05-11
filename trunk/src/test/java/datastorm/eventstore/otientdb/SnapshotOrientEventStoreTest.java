@@ -1,5 +1,6 @@
 package datastorm.eventstore.otientdb;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.*;
@@ -18,7 +19,7 @@ public class SnapshotOrientEventStoreTest extends AbstractSnapshotEventStoreTest
     public void setUp() throws Exception {
         super.setUp();
 
-        beforeClusters = database.getClusterNames();
+        beforeClusters = new ArrayList<String>(database.getClusterNames());
     }
 
     @Override

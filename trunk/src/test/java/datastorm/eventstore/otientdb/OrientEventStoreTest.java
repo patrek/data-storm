@@ -2,6 +2,7 @@ package datastorm.eventstore.otientdb;
 
 import org.junit.Before;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.*;
@@ -21,7 +22,7 @@ public class OrientEventStoreTest extends AbstractEventStoreTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        beforeClusters = database.getClusterNames();
+        beforeClusters = new ArrayList<String>(database.getClusterNames());
     }
 
 
