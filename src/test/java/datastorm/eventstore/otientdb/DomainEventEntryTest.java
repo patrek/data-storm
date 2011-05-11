@@ -27,7 +27,7 @@ public class DomainEventEntryTest {
 
     @Before
     public void setUp() throws Exception {
-        database = new ODatabaseDocumentTx("memory:default");
+        database = new ODatabaseDocumentTx("local:target/default");
         database.create();
     }
 

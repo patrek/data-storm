@@ -1,5 +1,6 @@
 package datastorm.eventstore.otientdb;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -38,7 +39,7 @@ public abstract class AbstractEventStoreTest {
 
     @Before
     public void setUp() throws Exception {
-        database = new ODatabaseDocumentTx("memory:default");
+        database = new ODatabaseDocumentTx("local:target/default");
         database.create();
         orientEventStore = new OrientEventStore();
         orientEventStore.setDatabase(database);
@@ -61,7 +62,7 @@ public abstract class AbstractEventStoreTest {
         domainEvents.add(new SimpleDomainEvent(1, agId("1"), "val"));
         orientEventStore.appendEvents("Simple", stream(domainEvents));
         database.close();
-        database.open("writer", "writer");
+        database.open("admin", "admin");
         assertTrue(database.getMetadata().getSchema().existsClass(DomainEventEntry.DOMAIN_EVENT_CLASS));
     }
 

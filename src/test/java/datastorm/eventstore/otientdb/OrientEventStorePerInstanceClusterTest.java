@@ -3,7 +3,9 @@ package datastorm.eventstore.otientdb;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertClassHasClusterIds;
 import static datastorm.eventstore.otientdb.OrientEventStoreTestUtils.assertClusterNames;
@@ -25,7 +27,7 @@ public class OrientEventStorePerInstanceClusterTest extends AbstractEventStoreTe
         final PerInstanceClusterResolver clusterResolver = new PerInstanceClusterResolver();
         clusterResolver.setDatabase(database);
         orientEventStore.setClusterResolver(clusterResolver);
-        beforeClusters = database.getClusterNames();
+        beforeClusters = new ArrayList<String>(database.getClusterNames());
     }
 
     @Override
