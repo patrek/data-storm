@@ -3,29 +3,29 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="benchMark" class="datastorm.integrationtests.eventstore.benchmark.orientdb.OrientEventStoreBenchMark">
+    <bean id="benchMark" class="ua.com.datastorm.integrationtests.eventstore.benchmark.orientdb.OrientEventStoreBenchMark">
         <constructor-arg index="0" ref="eventStore"/>
         <constructor-arg index="1" ref="oDocumentDatabase"/>
     </bean>
 
-    <bean id="eventStore" class="datastorm.eventstore.otientdb.OrientEventStore">
+    <bean id="eventStore" class="ua.com.datastorm.eventstore.orientdb.OrientEventStore">
         <property name="database" ref="oDocumentDatabase"/>
         <property name="clusterResolver" ref="clusterResolver"/>
     </bean>
 
-    <bean id="threadedODatabaseDocumentFactory" class="datastorm.eventstore.otientdb.ThreadedODatabaseDocumentFactory">
+    <bean id="threadedODatabaseDocumentFactory" class="ua.com.datastorm.eventstore.orientdb.ThreadedODatabaseDocumentFactory">
         <!--<constructor-arg index="0" value="local:/database/benchmarkorient"/>-->
         <constructor-arg index="0" value="remote:localhost/benchmarkorient"/>
         <constructor-arg index="1" value="admin"/>
         <constructor-arg index="2" value="admin"/>
     </bean>
 
-    <!--<bean id="oDocumentDatabase" class="datastorm.eventstore.otientdb.ODatabaseDocumentStaticProxy">-->
+    <!--<bean id="oDocumentDatabase" class="ua.com.datastorm.eventstore.orientdb.ODatabaseDocumentStaticProxy">-->
     <!--<constructor-arg index="0" ref="threadedODatabaseDocumentFactory"/>-->
     <!--</bean>-->
 
     <bean id="dynamicProxyFactory"
-          class="datastorm.eventstore.otientdb.transactions.ODatabaseDocumentDynamicProxyFactory"/>
+          class="ua.com.datastorm.eventstore.orientdb.transactions.ODatabaseDocumentDynamicProxyFactory"/>
 
     <bean id="oDocumentDatabase" class="com.orientechnologies.orient.core.db.document.ODatabaseDocument"
           factory-bean="dynamicProxyFactory"
@@ -34,7 +34,7 @@
     </bean>
 
     <bean id="clusterResolver"
-          class="datastorm.eventstore.otientdb.PerInstanceClusterResolver">
+          class="ua.com.datastorm.eventstore.orientdb.PerInstanceClusterResolver">
         <property name="database" ref="oDocumentDatabase"/>
     </bean>
 </beans>

@@ -1,0 +1,66 @@
+package ua.com.datastorm.eventstore.orientdb;
+
+import org.junit.Before;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static ua.com.datastorm.eventstore.orientdb.OrientEventStoreTestUtils.assertClassHasClusterIds;
+import static ua.com.datastorm.eventstore.orientdb.OrientEventStoreTestUtils.assertClusterNames;
+
+/**
+ * Integration test case for {@link OrientEventStore}.
+ * This test case tests storing and reading events in case when
+ * {@link ClusterResolver} is {@link PerTypeClusterResolver} .
+ *
+ * @author Andrey Lomakin
+ */
+public class OrientEventStorePerTypeClusterTest extends AbstractEventStoreTest {
+    private Collection<String> beforeClusters;
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        final PerTypeClusterResolver clusterResolver = new PerTypeClusterResolver();
+        clusterResolver.setDatabase(database);
+        orientEventStore.setClusterResolver(clusterResolver);
+        beforeClusters = new ArrayList<String>(database.getClusterNames());
+    }
+
+    @Override
+    public void testBasicEventsStoring() throws Exception {
+        super.testBasicEventsStoring();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"simple"});
+        assertClassHasClusterIds(new String[]{"simple"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
+    }
+
+    @Override
+    public void testEventsFromDifferentTypesWithSameId() {
+        super.testEventsFromDifferentTypesWithSameId();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"docone", "doctwo"});
+        assertClassHasClusterIds(new String[]{"docone", "doctwo"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
+    }
+
+    @Override
+    public void testEventsFromDifferentTypesWithDiffId() {
+        super.testEventsFromDifferentTypesWithDiffId();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"docone", "doctwo"});
+        assertClassHasClusterIds(new String[]{"docone", "doctwo"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
+    }
+
+    @Override
+    public void testEventsWithDiffId() {
+        super.testEventsWithDiffId();
+
+        final Collection<String> afterClusters = database.getClusterNames();
+        assertClusterNames(beforeClusters, afterClusters, new String[]{"doc"});
+        assertClassHasClusterIds(new String[]{"doc"}, DomainEventEntry.DOMAIN_EVENT_CLASS, database);
+    }
+}
