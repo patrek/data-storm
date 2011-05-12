@@ -7,9 +7,9 @@
     <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>data storm</name>
+    <name>Orient DB EventStore</name>
     <description>
-        EventStore for Axonframework, which uses noSQL database OrientDB
+        EventStore for Axon framework, which uses noSQL database OrientDB
     </description>
 
     <properties>
