@@ -2,12 +2,12 @@ package ua.com.datastorm.spring;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import ua.com.datastorm.eventstore.orientdb.ConnectionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import ua.com.datastorm.eventstore.orientdb.ConnectionManager;
 
 /**
  * <p> {@link org.springframework.transaction.PlatformTransactionManager} implementation for OrientDb </p>
@@ -46,6 +46,7 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
             }
         } catch (RuntimeException e) {
             //TODO translate e
+            throw e;
         }
     }
 
@@ -61,6 +62,7 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
         } catch (RuntimeException e) {
             //TODO create exception translator
             //DataAccessUtils.translateIfNecessary(e, translator)
+            throw e;
         }
     }
 
@@ -76,6 +78,7 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
         } catch (RuntimeException e) {
             //TODO create exception translator
             //DataAccessUtils.translateIfNecessary(e, translator)
+            throw e;
         }
     }
 
@@ -93,11 +96,11 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
         return ((OrientTransactionObject) transaction).hasTransaction();
     }
 
-    private class OrientTransactionObject {
+    protected class OrientTransactionObject {
         private ODatabaseDocument database;
         private boolean connectionNew;
 
-        private OrientTransactionObject() {
+        public OrientTransactionObject() {
         }
 
         public ODatabaseDocument getDatabase() {
