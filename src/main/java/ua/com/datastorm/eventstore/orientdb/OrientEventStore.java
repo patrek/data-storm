@@ -3,6 +3,7 @@ package ua.com.datastorm.eventstore.orientdb;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * An {@link EventStore} implementation that uses Document oriented OrientDB to store DomainEvents in a database.
@@ -45,6 +47,8 @@ public class OrientEventStore implements SnapshotEventStore {
     private ODatabaseDocument database;
     private ClusterResolver clusterResolver;
     private boolean leaveLastSnapshotOnly = true;
+    private boolean checkDomainEventUniqueness = false;
+
 
     public OrientEventStore() {
         eventSerializer = new XStreamEventSerializer();
@@ -63,6 +67,8 @@ public class OrientEventStore implements SnapshotEventStore {
      * {@inheritDoc}
      */
     public void appendEvents(String type, DomainEventStream domainEventStream) {
+        registerEvenUniquenessHook();
+
         while (domainEventStream.hasNext()) {
             final DomainEvent event = domainEventStream.next();
             final DomainEventEntry domainEventEntry = new DomainEventEntry(type, event, eventSerializer);
@@ -84,14 +90,14 @@ public class OrientEventStore implements SnapshotEventStore {
             aggregateCluster = clusterResolver.resolveClusterForAggregate(type, aggregateIdentifier);
         }
 
-        final DomainEvent snapshotEvent = loadLastSnapshotEvent(type, aggregateIdentifier);
+        final ODocument snapshotEvent = loadLastSnapshotEvent(type, aggregateIdentifier);
 
         String query;
         if (aggregateCluster != null) {
             query = "select * from cluster:" + aggregateCluster +
                     " where " + DomainEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
                     " and " + DomainEventEntry.AGGREGATE_TYPE_FIELD + " = '" + type + "'" +
-                    " and (@class = '" + DomainEventEntry.DOMAIN_EVENT_CLASS + "' or @class = '" + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS + "')";
+                    " and @class = '" + DomainEventEntry.DOMAIN_EVENT_CLASS + "'";
         } else {
             query = "select * from " + DomainEventEntry.DOMAIN_EVENT_CLASS +
                     " where " + DomainEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
@@ -99,7 +105,8 @@ public class OrientEventStore implements SnapshotEventStore {
         }
 
         if (snapshotEvent != null) {
-            query += " and ( " + DomainEventEntry.SEQUENCE_NUMBER_FIELD + " >= " + snapshotEvent.getSequenceNumber() + " )";
+            final long snapshotSequenceNumber = snapshotEvent.<Long>field(DomainEventEntry.SEQUENCE_NUMBER_FIELD);
+            query += " and ( " + DomainEventEntry.SEQUENCE_NUMBER_FIELD + " >= " + ( snapshotSequenceNumber + 1 ) + " )";
         }
 
         query += " order by " + DomainEventEntry.SEQUENCE_NUMBER_FIELD;
@@ -107,6 +114,9 @@ public class OrientEventStore implements SnapshotEventStore {
         final List<ODocument> queryResult =
                 database.query(new OSQLSynchQuery<ODocument>(query));
 
+        if(snapshotEvent != null ) {
+            queryResult.add(0, snapshotEvent);
+        }
 
         logger.debug("Query \"{}\" was performed and {} events were fetched.", query, queryResult.size());
 
@@ -124,6 +134,8 @@ public class OrientEventStore implements SnapshotEventStore {
      */
     @Override
     public void appendSnapshotEvent(String type, DomainEvent snapshotEvent) {
+        registerEvenUniquenessHook();
+
         if (leaveLastSnapshotOnly) {
             dropSnapshots(type, snapshotEvent.getAggregateIdentifier());
         }
@@ -170,6 +182,10 @@ public class OrientEventStore implements SnapshotEventStore {
         this.clusterResolver = clusterResolver;
     }
 
+    public void setCheckDomainEventUniqueness(boolean checkDomainEventUniqueness) {
+        this.checkDomainEventUniqueness = checkDomainEventUniqueness;
+    }
+
     private void dropSnapshots(String aggregateType, AggregateIdentifier aggregateIdentifier) {
         if (!database.getMetadata().getSchema().existsClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS)) {
             logger.debug("Snapshot event class does not exist, nothing will be removed, just exit.");
@@ -198,7 +214,7 @@ public class OrientEventStore implements SnapshotEventStore {
         logger.debug("Command \"{}\" was performed and {} snapshot events were removed.", command, removedSnapshots);
     }
 
-    private DomainEvent loadLastSnapshotEvent(String aggregateType, AggregateIdentifier aggregateIdentifier) {
+    private ODocument loadLastSnapshotEvent(String aggregateType, AggregateIdentifier aggregateIdentifier) {
         if (!database.getMetadata().getSchema().existsClass(SnapshotEventEntry.SNAPSHOT_EVENT_CLASS)) {
             logger.debug("Snapshot event class does not exist, nothing will be returned, just exit.");
             return null;
@@ -231,7 +247,7 @@ public class OrientEventStore implements SnapshotEventStore {
         if (queryResult.isEmpty()) {
             return null;
         }
-        return eventSerializer.deserialize(queryResult.get(0).<byte[]>field("body"));
+        return queryResult.get(0);
     }
 
     private void storeEventEntry(DomainEventEntry domainEventEntry) {
@@ -260,6 +276,21 @@ public class OrientEventStore implements SnapshotEventStore {
         } else {
             logger.debug("Event for aggregate type \"{}\", id [{}] and sequence number {} was saved to the default cluster.",
                     new Object[]{aggregateType, event.getSequenceNumber(), event.getAggregateIdentifier().asString()});
+        }
+    }
+
+    private void registerEvenUniquenessHook() {
+        if (checkDomainEventUniqueness) {
+            logger.debug("DomainEvent uniqueness check is switched on. Trying to register {}.",
+                    DomainEventUniquenessHook.class.getName());
+            final DomainEventUniquenessHook uniquenessHook = new DomainEventUniquenessHook(database);
+            final Set<ORecordHook> hooks = database.getHooks();
+            if (!hooks.contains(uniquenessHook)) {
+                database.registerHook(uniquenessHook);
+                logger.debug("{}  has been registered.", DomainEventUniquenessHook.class.getName());
+            } else if (logger.isDebugEnabled()) {
+                logger.debug("{} had been already registered.", DomainEventUniquenessHook.class.getName());
+            }
         }
     }
 }

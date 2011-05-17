@@ -3,6 +3,7 @@ package ua.com.datastorm.eventstore.orientdb;
 import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -82,10 +83,10 @@ class DomainEventEntry {
     private String aggregateType;
 
     /**
-     * @param aggregateType    Type of the related aggregate.
-     * @param event            DomainEvent to be stored.
-     * @param eventSerializer  {@link EventSerializer} that must be used to convert Domain Event to the
-     *                         binary presentation.
+     * @param aggregateType   Type of the related aggregate.
+     * @param event           DomainEvent to be stored.
+     * @param eventSerializer {@link EventSerializer} that must be used to convert Domain Event to the
+     *                        binary presentation.
      */
     DomainEventEntry(String aggregateType, DomainEvent event, EventSerializer eventSerializer) {
         this.aggregateType = aggregateType;
@@ -113,14 +114,14 @@ class DomainEventEntry {
      * If class related to the given document does not exist it will be created and bounded
      * to the passed in cluster name.
      * If class exist but not bounded to the passed in cluster it will be.
-     *
+     * <p/>
      * Created Document is not stored, if you need to store document call document.save(clusterName)
      * and schema.save() to persist all changes.
      *
-     * @param databaseDocument  Current database instance.
-     * @param clusterName       Cluster name where document is going to be stored. Can be null.
-     *                          In last case default cluster should be used.
-     * @return                  Document presentation of Domain Event.
+     * @param databaseDocument Current database instance.
+     * @param clusterName      Cluster name where document is going to be stored. Can be null.
+     *                         In last case default cluster should be used.
+     * @return Document presentation of Domain Event.
      */
     ODocument asDocument(ODatabaseDocument databaseDocument, String clusterName) {
         final OClass eventClass = createClass(databaseDocument, clusterName);
@@ -140,10 +141,10 @@ class DomainEventEntry {
      * Creates document class definition for the Domain Event type that is presented by given document.
      * All descendants should override this method to provide its own class definition.
      *
-     * @param databaseDocument  Current database instance.
-     * @param clusterName       Cluster name where document is going to be stored. Can be null.
-     *                          In last case default cluster should be used.
-     * @return                  Document class that presents Domain Event and auxiliary metadata.
+     * @param databaseDocument Current database instance.
+     * @param clusterName      Cluster name where document is going to be stored. Can be null.
+     *                         In last case default cluster should be used.
+     * @return Document class that presents Domain Event and auxiliary metadata.
      */
     protected OClass createClass(ODatabaseDocument databaseDocument, String clusterName) {
         final OSchema schema = databaseDocument.getMetadata().getSchema();

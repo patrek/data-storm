@@ -74,17 +74,17 @@ public abstract class AbstractSnapshotEventStoreTest {
                 new String[]{"1", "1"});
         orientEventStore.appendEvents("Aggregate", stream(firstDomainEvents));
 
-        orientEventStore.appendSnapshotEvent("Aggregate", new SimpleDomainEvent(3, agId("1"), "val"));
+        orientEventStore.appendSnapshotEvent("Aggregate", new SimpleDomainEvent(2, agId("1"), "val"));
 
-        final List<SimpleDomainEvent> secondDomainEvents = createSimpleDomainEvents(new int[]{4, 5},
+        final List<SimpleDomainEvent> secondDomainEvents = createSimpleDomainEvents(new int[]{3, 4},
                 new String[]{"1", "1"});
         orientEventStore.appendEvents("Aggregate", stream(secondDomainEvents));
 
-        final SimpleDomainEvent snapshotEvent = new SimpleDomainEvent(6, agId("1"), "val");
+        final SimpleDomainEvent snapshotEvent = new SimpleDomainEvent(4, agId("1"), "val");
 
         orientEventStore.appendSnapshotEvent("Aggregate", snapshotEvent);
 
-        final List<SimpleDomainEvent> thirdDomainEvents = createSimpleDomainEvents(new int[]{7, 8},
+        final List<SimpleDomainEvent> thirdDomainEvents = createSimpleDomainEvents(new int[]{5, 6},
                 new String[]{"1", "1"});
         orientEventStore.appendEvents("Aggregate", stream(thirdDomainEvents));
 
@@ -93,36 +93,6 @@ public abstract class AbstractSnapshotEventStoreTest {
         final List<SimpleDomainEvent> resultEvents = new ArrayList<SimpleDomainEvent>();
         resultEvents.add(snapshotEvent);
         resultEvents.addAll(thirdDomainEvents);
-
-        assertDomainEventsEquality(resultEvents, readStream);
-    }
-
-    @Test
-    public void testSortingWithSnapshot() {
-        final List<SimpleDomainEvent> firstDomainEvents = createSimpleDomainEvents(new int[]{1, 8},
-                new String[]{"1", "1"});
-        orientEventStore.appendEvents("Aggregate", stream(firstDomainEvents));
-
-        orientEventStore.appendSnapshotEvent("Aggregate", new SimpleDomainEvent(3, agId("1"), "val"));
-
-        final List<SimpleDomainEvent> secondDomainEvents = createSimpleDomainEvents(new int[]{4, 7},
-                new String[]{"1", "1"});
-        orientEventStore.appendEvents("Aggregate", stream(secondDomainEvents));
-
-        final SimpleDomainEvent snapshotEvent = new SimpleDomainEvent(6, agId("1"), "val");
-
-        orientEventStore.appendSnapshotEvent("Aggregate", snapshotEvent);
-
-        final List<SimpleDomainEvent> thirdDomainEvents = createSimpleDomainEvents(new int[]{5, 2},
-                new String[]{"1", "1"});
-        orientEventStore.appendEvents("Aggregate", stream(thirdDomainEvents));
-
-        final DomainEventStream readStream = orientEventStore.readEvents("Aggregate", agId("1"));
-
-        final List<SimpleDomainEvent> resultEvents = new ArrayList<SimpleDomainEvent>();
-        resultEvents.add(snapshotEvent);
-        resultEvents.add(secondDomainEvents.get(1));
-        resultEvents.add(firstDomainEvents.get(1));
 
         assertDomainEventsEquality(resultEvents, readStream);
     }
