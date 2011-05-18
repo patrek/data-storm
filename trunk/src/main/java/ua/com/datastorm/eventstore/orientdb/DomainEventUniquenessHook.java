@@ -64,8 +64,7 @@ class DomainEventUniquenessHook extends ODocumentHookAbstract {
     private boolean isDomainEvent(ODocument iDocument) {
         final OClass schemaClass = iDocument.getSchemaClass();
         return schemaClass != null &&
-                (schemaClass.getName().equals(DomainEventEntry.DOMAIN_EVENT_CLASS) ||
-                        schemaClass.isSubClassOf(DomainEventEntry.DOMAIN_EVENT_CLASS));
+                (schemaClass.getName().equals(DomainEventEntry.DOMAIN_EVENT_CLASS));
     }
 
     private void setupIndex(ODocument iDocument) {
