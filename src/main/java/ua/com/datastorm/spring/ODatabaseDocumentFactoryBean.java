@@ -17,10 +17,6 @@ public class ODatabaseDocumentFactoryBean implements FactoryBean<ODatabaseDocume
     private ConnectionManager connectionManager;
     private ODatabaseDocument oDatabaseDocumentProxy;
 
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
     public void setConnectionManager(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
         oDatabaseDocumentProxy = (ODatabaseDocument) Proxy.newProxyInstance(ODatabaseDocument.class.getClassLoader(),
@@ -46,7 +42,7 @@ public class ODatabaseDocumentFactoryBean implements FactoryBean<ODatabaseDocume
      * {@inheritDoc}
      */
     @Override
-    public ODatabaseDocument getObject() throws Exception {
+    public ODatabaseDocument getObject() {
         if (connectionManager == null) {
             throw new FactoryBeanNotInitializedException("Parameter connection manager can't be null");
         }
