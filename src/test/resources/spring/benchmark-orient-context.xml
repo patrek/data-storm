@@ -25,7 +25,7 @@
     <!--</bean>-->
 
     <bean id="dynamicProxyFactory"
-          class="ua.com.datastorm.eventstore.orientdb.transactions.ODatabaseDocumentDynamicProxyFactory"/>
+          class="ua.com.datastorm.eventstore.orientdb.ODatabaseDocumentDynamicProxyFactory"/>
 
     <bean id="oDocumentDatabase" class="com.orientechnologies.orient.core.db.document.ODatabaseDocument"
           factory-bean="dynamicProxyFactory"
