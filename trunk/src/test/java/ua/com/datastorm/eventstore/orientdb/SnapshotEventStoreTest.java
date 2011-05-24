@@ -23,14 +23,11 @@ import static org.junit.Assert.assertTrue;
  * Base class for integration test cases that test {@link OrientEventStore} implementation
  * of {@link org.axonframework.eventstore.SnapshotEventStore} interface.
  * <p/>
- * All children of given class should specify only {@link ClusterResolver} or database implementation,
- * but all tests should implemented in given class. This done to test all test cases under different
- * environments.
  *
  * @author Andrey Lomakin
  *         Date: 10.04.11
  */
-public abstract class AbstractSnapshotEventStoreTest {
+public class SnapshotEventStoreTest {
     protected ODatabaseDocumentTx database;
     protected OrientEventStore orientEventStore;
     private boolean oldKeepOpen;

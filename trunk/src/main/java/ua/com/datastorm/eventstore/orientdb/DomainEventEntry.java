@@ -1,6 +1,5 @@
 package ua.com.datastorm.eventstore.orientdb;
 
-import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -16,7 +15,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Presentation of OrientDb document that will contain {@link DomainEvent} data and also metadata that will
  * be used in queries to find Domain Event of given type.
- * Instance of given document can be created by calling of {@link #asDocument(ODatabaseDocument, String)} method.
+ * Instance of given document can be created by calling of {@link #asDocument(ODatabaseDocument)} method.
  * <p/>
  * Document will contain following fields:
  * <ol>
@@ -115,17 +114,14 @@ class DomainEventEntry {
      * to the passed in cluster name.
      * If class exist but not bounded to the passed in cluster it will be.
      * <p/>
-     * Created Document is not stored, if you need to store document call document.save(clusterName)
+     * Created Document is not stored, if you need to store document call document.save()
      * and schema.save() to persist all changes.
      *
      * @param databaseDocument Current database instance.
-     * @param clusterName      Cluster name where document is going to be stored. Can be null.
-     *                         In last case default cluster should be used.
      * @return Document presentation of Domain Event.
      */
-    ODocument asDocument(ODatabaseDocument databaseDocument, String clusterName) {
-        final OClass eventClass = createClass(databaseDocument, clusterName);
-        addClusterToTheClassDefinition(databaseDocument, eventClass, clusterName);
+    ODocument asDocument(ODatabaseDocument databaseDocument) {
+        final OClass eventClass = createClass(databaseDocument);
 
         final ODocument eventDocument = new ODocument(eventClass);
         eventDocument.field(AGGREGATE_IDENTIFIER_FIELD, aggregateIdentifier.asString());
@@ -142,11 +138,9 @@ class DomainEventEntry {
      * All descendants should override this method to provide its own class definition.
      *
      * @param databaseDocument Current database instance.
-     * @param clusterName      Cluster name where document is going to be stored. Can be null.
-     *                         In last case default cluster should be used.
      * @return Document class that presents Domain Event and auxiliary metadata.
      */
-    protected OClass createClass(ODatabaseDocument databaseDocument, String clusterName) {
+    protected OClass createClass(ODatabaseDocument databaseDocument) {
         final OSchema schema = databaseDocument.getMetadata().getSchema();
         OClass eventClass = schema.getClass(DOMAIN_EVENT_CLASS);
 
@@ -154,18 +148,10 @@ class DomainEventEntry {
             return eventClass;
         }
 
-        final int clusterId;
 
-        if (clusterName != null) {
-            clusterId = databaseDocument.getClusterIdByName(clusterName);
-            logger.debug("OClass \"{}\" was created and associated with cluster \"{}\".", DOMAIN_EVENT_CLASS,
-                    clusterName);
-        } else {
-            clusterId = databaseDocument.getDefaultClusterId();
-            logger.debug("OClass \"{}\" was created.", DOMAIN_EVENT_CLASS);
-        }
+        logger.debug("OClass \"{}\" was created.", DOMAIN_EVENT_CLASS);
 
-        eventClass = schema.createClass(DOMAIN_EVENT_CLASS, clusterId);
+        eventClass = schema.createClass(DOMAIN_EVENT_CLASS);
 
         eventClass.createProperty(AGGREGATE_IDENTIFIER_FIELD, OType.STRING).setMandatory(true).setNotNull(true);
         eventClass.createProperty(SEQUENCE_NUMBER_FIELD, OType.LONG).setMandatory(true).setNotNull(true);
@@ -177,21 +163,4 @@ class DomainEventEntry {
         return eventClass;
     }
 
-    private void addClusterToTheClassDefinition(ODatabaseDocument databaseDocument, OClass eventClass,
-                                                String clusterName) {
-        if (clusterName == null) {
-            return;
-        }
-
-        final int clusterId = databaseDocument.getClusterIdByName(clusterName);
-
-        if (Ints.contains(eventClass.getClusterIds(), clusterId)) {
-            return;
-        }
-
-        eventClass.addClusterIds(clusterId);
-        logger.debug("Cluster with name \"{}\" and id [{}] was added to the OClass \"{}\" definition.",
-                new Object[]{clusterName, clusterId, eventClass.getName()});
-
-    }
 }

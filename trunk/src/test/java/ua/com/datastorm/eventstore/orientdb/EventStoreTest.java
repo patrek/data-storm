@@ -25,14 +25,11 @@ import static org.junit.Assert.assertTrue;
  * This test case tests only  storing and reading events.
  * Snapshots events are not covered.
  *
- * All children of given class should specify only {@link ClusterResolver} or database implementation,
- * but all tests should implemented in given class. This done to test all test cases under different
- * environments.
  *
  * @author Andrey Lomakin
  *         Date: 10.04.11
  */
-public abstract class AbstractEventStoreTest {
+public class EventStoreTest {
     protected ODatabaseDocumentTx database;
     protected OrientEventStore orientEventStore;
 

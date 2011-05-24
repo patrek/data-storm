@@ -73,12 +73,7 @@ class DomainEventUniquenessHook extends ODocumentHookAbstract {
             final OIndexManager indexManager = database.getMetadata().getIndexManager();
             uniquenessIndex = (OIndexUnique)
                     indexManager.createIndex(EVENT_UNIQUENESS_INDEX_NAME, OProperty.INDEX_TYPE.UNIQUE.toString(),
-                            schemaClass.getClusterIds(), null, null);
-        } else {
-            for (int clusterId : schemaClass.getClusterIds()) {
-                final String clusterName = database.getClusterNameById(clusterId);
-                uniquenessIndex.addCluster(clusterName);
-            }
+                            schemaClass.getClusterIds(), null, null, true);
         }
     }
 

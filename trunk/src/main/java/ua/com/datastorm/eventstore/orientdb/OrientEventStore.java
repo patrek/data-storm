@@ -31,9 +31,6 @@ import java.util.Set;
  * The serializer is used to serialize the events is configurable.
  * By default, the {@link XStreamEventSerializer} is used.
  * <p/>
- * You can specify {@link ClusterResolver} that will be used to identify and create clusters where DomainEvents
- * will be stored. If Cluster Resolver is not specified default cluster will be used.
- * <p/>
  * If you would like to decrease space that will be consumed for events and in some way improve performance you can
  * set uo flag {#setLeaveLastSnapshotOnly} to true. This flag forces removing of old snapshot events when new one is
  * added.
@@ -45,7 +42,6 @@ public class OrientEventStore implements SnapshotEventStore {
     private final EventSerializer eventSerializer;
 
     private ODatabaseDocument database;
-    private ClusterResolver clusterResolver;
     private boolean leaveLastSnapshotOnly = true;
     private boolean checkDomainEventUniqueness = false;
 
@@ -85,28 +81,16 @@ public class OrientEventStore implements SnapshotEventStore {
             return new SimpleDomainEventStream();
         }
 
-        String aggregateCluster = null;
-        if (clusterResolver != null) {
-            aggregateCluster = clusterResolver.resolveClusterForAggregate(type, aggregateIdentifier);
-        }
 
         final ODocument snapshotEvent = loadLastSnapshotEvent(type, aggregateIdentifier);
 
-        String query;
-        if (aggregateCluster != null) {
-            query = "select * from cluster:" + aggregateCluster +
-                    " where " + DomainEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
-                    " and " + DomainEventEntry.AGGREGATE_TYPE_FIELD + " = '" + type + "'" +
-                    " and @class = '" + DomainEventEntry.DOMAIN_EVENT_CLASS + "'";
-        } else {
-            query = "select * from " + DomainEventEntry.DOMAIN_EVENT_CLASS +
-                    " where " + DomainEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
-                    " and " + DomainEventEntry.AGGREGATE_TYPE_FIELD + " = '" + type + "'";
-        }
+        String query = "select * from " + DomainEventEntry.DOMAIN_EVENT_CLASS +
+                " where " + DomainEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
+                " and " + DomainEventEntry.AGGREGATE_TYPE_FIELD + " = '" + type + "'";
 
         if (snapshotEvent != null) {
             final long snapshotSequenceNumber = snapshotEvent.<Long>field(DomainEventEntry.SEQUENCE_NUMBER_FIELD);
-            query += " and ( " + DomainEventEntry.SEQUENCE_NUMBER_FIELD + " >= " + ( snapshotSequenceNumber + 1 ) + " )";
+            query += " and ( " + DomainEventEntry.SEQUENCE_NUMBER_FIELD + " >= " + (snapshotSequenceNumber + 1) + " )";
         }
 
         query += " order by " + DomainEventEntry.SEQUENCE_NUMBER_FIELD;
@@ -114,7 +98,7 @@ public class OrientEventStore implements SnapshotEventStore {
         final List<ODocument> queryResult =
                 database.query(new OSQLSynchQuery<ODocument>(query));
 
-        if(snapshotEvent != null ) {
+        if (snapshotEvent != null) {
             queryResult.add(0, snapshotEvent);
         }
 
@@ -173,15 +157,6 @@ public class OrientEventStore implements SnapshotEventStore {
         this.database = database;
     }
 
-    /**
-     * Set {@link ClusterResolver} that will be used to identify in which cluster DomainEvents will be stored.
-     *
-     * @param clusterResolver {@link ClusterResolver} instance.
-     */
-    public void setClusterResolver(ClusterResolver clusterResolver) {
-        this.clusterResolver = clusterResolver;
-    }
-
     public void setCheckDomainEventUniqueness(boolean checkDomainEventUniqueness) {
         this.checkDomainEventUniqueness = checkDomainEventUniqueness;
     }
@@ -191,24 +166,9 @@ public class OrientEventStore implements SnapshotEventStore {
             logger.debug("Snapshot event class does not exist, nothing will be removed, just exit.");
             return;
         }
-
-        final String command;
-
-        String aggregateCluster = null;
-        if (clusterResolver != null) {
-            aggregateCluster = clusterResolver.resolveClusterForAggregate(aggregateType, aggregateIdentifier);
-        }
-
-        if (aggregateCluster != null) {
-            command = "delete * from cluster:" + aggregateCluster +
-                    " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
-                    " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'" +
-                    " and @class = '" + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS + "'";
-        } else {
-            command = "delete * from " + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS +
-                    " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
-                    " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'";
-        }
+        final String command = "delete from " + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS +
+                " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
+                " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'";
 
         final int removedSnapshots = database.command(new OCommandSQL(command)).<Number>execute().intValue();
         logger.debug("Command \"{}\" was performed and {} snapshot events were removed.", command, removedSnapshots);
@@ -220,24 +180,10 @@ public class OrientEventStore implements SnapshotEventStore {
             return null;
         }
 
-        String aggregateCluster = null;
-        if (clusterResolver != null) {
-            aggregateCluster = clusterResolver.resolveClusterForAggregate(aggregateType, aggregateIdentifier);
-        }
-
-        final String query;
-        if (aggregateCluster != null) {
-            query = "select * from cluster:" + aggregateCluster +
-                    " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
-                    " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'" +
-                    " and @class = '" + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS + "'" +
-                    " order by " + SnapshotEventEntry.SEQUENCE_NUMBER_FIELD + " desc limit 1";
-        } else {
-            query = "select * from " + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS +
-                    " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
-                    " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'" +
-                    " order by " + SnapshotEventEntry.SEQUENCE_NUMBER_FIELD + " desc limit 1";
-        }
+        final String query = "select * from " + SnapshotEventEntry.SNAPSHOT_EVENT_CLASS +
+                " where " + SnapshotEventEntry.AGGREGATE_IDENTIFIER_FIELD + " = '" + aggregateIdentifier.asString() + "'" +
+                " and " + SnapshotEventEntry.AGGREGATE_TYPE_FIELD + " = '" + aggregateType + "'" +
+                " order by " + SnapshotEventEntry.SEQUENCE_NUMBER_FIELD + " desc limit 1";
 
         final List<ODocument> queryResult =
                 database.query(new OSQLSynchQuery<ODocument>(query));
@@ -254,29 +200,14 @@ public class OrientEventStore implements SnapshotEventStore {
         final DomainEvent event = domainEventEntry.getEvent();
         final String aggregateType = domainEventEntry.getAggregateType();
 
-        String aggregateCluster = null;
-        if (clusterResolver != null) {
-            aggregateCluster = clusterResolver.resolveClusterForAggregate(aggregateType, event.getAggregateIdentifier());
-        }
+        final ODocument eventDocument = domainEventEntry.asDocument(database);
 
-        final ODocument eventDocument = domainEventEntry.asDocument(database, aggregateCluster);
-
-        if (aggregateCluster != null) {
-            eventDocument.save(aggregateCluster);
-        } else {
-            eventDocument.save();
-        }
+        eventDocument.save();
         final OSchema schema = database.getMetadata().getSchema();
         schema.save();
 
-        if (aggregateCluster != null) {
-            logger.debug("Event for aggregate type \"{}\", id [{}] and sequence number {} was saved to the cluster \"{}\".",
-                    new Object[]{aggregateType, event.getAggregateIdentifier().asString(), event.getSequenceNumber(),
-                            aggregateCluster});
-        } else {
-            logger.debug("Event for aggregate type \"{}\", id [{}] and sequence number {} was saved to the default cluster.",
-                    new Object[]{aggregateType, event.getSequenceNumber(), event.getAggregateIdentifier().asString()});
-        }
+        logger.debug("Event for aggregate type \"{}\", id [{}] and sequence number {} was saved to the default cluster.",
+                new Object[]{aggregateType, event.getSequenceNumber(), event.getAggregateIdentifier().asString()});
     }
 
     private void registerEvenUniquenessHook() {
