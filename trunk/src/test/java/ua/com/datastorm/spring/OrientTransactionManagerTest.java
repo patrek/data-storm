@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import ua.com.datastorm.eventstore.orientdb.ConnectionManager;
@@ -19,12 +20,15 @@ public class OrientTransactionManagerTest {
     private OrientTransactionManager transactionManager;
     private ConnectionManager connectionManagerMock;
     private ODatabaseDocument connectionMock;
+    private OrientPersistenceExceptionTranslator exceptionTranslatorMock;
 
     @Before
     public void setUp() throws Exception {
         connectionManagerMock = mock(ConnectionManager.class);
+        exceptionTranslatorMock = mock(OrientPersistenceExceptionTranslator.class);
         transactionManager = new OrientTransactionManager();
         transactionManager.setConnectionManager(connectionManagerMock);
+        transactionManager.setPersistenceExceptionTranslator(exceptionTranslatorMock);
         connectionMock = mock(ODatabaseDocument.class);
     }
 
@@ -91,6 +95,30 @@ public class OrientTransactionManagerTest {
         transactionManager.doCommit(status);
 
         verify(connectionMock).commit();
+    }
+
+
+    @Test
+    public void testDoCommitRuntimeException() {
+        RuntimeException error = new RuntimeException("ERROR");
+        when(connectionMock.commit()).thenThrow(error);
+        when(exceptionTranslatorMock.translateExceptionIfPossible(error)).thenReturn(new InvalidDataAccessApiUsageException(""));
+
+        OrientTransactionManager.OrientTransactionObject txObject = transactionManager.new OrientTransactionObject();
+        txObject.setDatabase(connectionMock, false);
+        DefaultTransactionStatus status = new DefaultTransactionStatus(txObject, false, false, false, false, null);
+
+        boolean caught = false;
+        try {
+            transactionManager.doCommit(status);
+        } catch (InvalidDataAccessApiUsageException e) {
+            caught = true;
+        }
+
+        verify(connectionMock).commit();
+        verify(exceptionTranslatorMock).translateExceptionIfPossible(error);
+
+        assertTrue("Exception must be caught", caught);
     }
 
     @Test

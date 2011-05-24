@@ -2,6 +2,8 @@ package ua.com.datastorm.spring;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import org.springframework.dao.support.DataAccessUtils;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
@@ -15,6 +17,7 @@ import ua.com.datastorm.eventstore.orientdb.ConnectionManager;
  * @author EniSh
  */
 public class OrientTransactionManager extends AbstractPlatformTransactionManager {
+    private OrientPersistenceExceptionTranslator persistenceExceptionTranslator = new OrientPersistenceExceptionTranslator();
     private ConnectionManager connectionManager;
 
     public void setConnectionManager(ConnectionManager connectionManager) {
@@ -45,8 +48,18 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
                 TransactionSynchronizationManager.bindResource(connectionManager, txObj.getDatabase());
             }
         } catch (RuntimeException e) {
-            //TODO translate e
-            throw e;
+            closeDatabaseAfterFailedBegin(txObj);
+            throw new CannotCreateTransactionException("Could not open ODatabaseDocument for transaction", e);
+        }
+    }
+
+    private void closeDatabaseAfterFailedBegin(OrientTransactionObject txObj) {
+        try {
+            if (txObj.getDatabase() != null) {
+                txObj.getDatabase().rollback();
+            }
+        } finally {
+            txObj.getDatabase().close();
         }
     }
 
@@ -60,9 +73,7 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
         try {
             transaction.getDatabase().commit();
         } catch (RuntimeException e) {
-            //TODO create exception translator
-            //DataAccessUtils.translateIfNecessary(e, translator)
-            throw e;
+            throw DataAccessUtils.translateIfNecessary(e, persistenceExceptionTranslator);
         }
     }
 
@@ -76,9 +87,7 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
         try {
             transaction.getDatabase().rollback();
         } catch (RuntimeException e) {
-            //TODO create exception translator
-            //DataAccessUtils.translateIfNecessary(e, translator)
-            throw e;
+            throw DataAccessUtils.translateIfNecessary(e, persistenceExceptionTranslator);
         }
     }
 
@@ -120,4 +129,13 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
             return connectionNew;
         }
     }
+
+    public OrientPersistenceExceptionTranslator getPersistenceExceptionTranslator() {
+        return persistenceExceptionTranslator;
+    }
+
+    public void setPersistenceExceptionTranslator(OrientPersistenceExceptionTranslator persistenceExceptionTranslator) {
+        this.persistenceExceptionTranslator = persistenceExceptionTranslator;
+    }
+
 }
