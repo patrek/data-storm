@@ -2,6 +2,7 @@ package ua.com.datastorm.eventstore.orientdb;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.index.OIndexCallback;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -9,7 +10,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
-class DomainEventUniquenessHook extends ODocumentHookAbstract {
+class DomainEventUniquenessHook extends ODocumentHookAbstract implements OIndexCallback {
     static final String EVENT_UNIQUENESS_INDEX_NAME = DomainEventUniquenessHook.class.getName() +
             ".EVENT_UNIQUENESS_INDEX";
 
@@ -61,6 +62,11 @@ class DomainEventUniquenessHook extends ODocumentHookAbstract {
         return false;
     }
 
+      @Override
+    public Object getDocumentValueToIndex(ODocument iDocument) {
+        return generateKey(iDocument);
+    }
+
     private boolean isDomainEvent(ODocument iDocument) {
         final OClass schemaClass = iDocument.getSchemaClass();
         return schemaClass != null &&
@@ -73,7 +79,8 @@ class DomainEventUniquenessHook extends ODocumentHookAbstract {
             final OIndexManager indexManager = database.getMetadata().getIndexManager();
             uniquenessIndex = (OIndexUnique)
                     indexManager.createIndex(EVENT_UNIQUENESS_INDEX_NAME, OProperty.INDEX_TYPE.UNIQUE.toString(),
-                            schemaClass.getClusterIds(), null, null, true);
+                            schemaClass.getClusterIds(), this, null, true);
+            uniquenessIndex.rebuild();
         }
     }
 
@@ -102,4 +109,5 @@ class DomainEventUniquenessHook extends ODocumentHookAbstract {
     public int hashCode() {
         return database.hashCode();
     }
+
 }
