@@ -37,15 +37,12 @@ public class DomainEventEntryTest {
     }
 
     @Test
-    public void testDocumentAndClassCreatedWithCluster() {
+    public void testDocumentAndClassCreated() {
         final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
         final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
                 domainEvent, eventSerializer);
 
-        final int expectedClusterId = database.addPhysicalCluster("cluster");
-        assertTrue(expectedClusterId != -1);
-
-        final ODocument result = domainEventEntry.asDocument(database, "cluster");
+        final ODocument result = domainEventEntry.asDocument(database);
 
         assertNotNull(result);
 
@@ -55,30 +52,8 @@ public class DomainEventEntryTest {
         assertDomainEventSchema(eventClass);
 
         assertEquals(1, eventClass.getClusterIds().length);
-
-        assertEquals(expectedClusterId, eventClass.getClusterIds()[0]);
     }
 
-    @Test
-    public void testDocumentAndClassCreatedWithoutCluster() {
-        final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
-        final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
-                domainEvent, eventSerializer);
-
-        final ODocument result = domainEventEntry.asDocument(database, null);
-
-        assertNotNull(result);
-
-        assertDocumentStructure(domainEvent, result);
-
-        final OClass eventClass = result.getSchemaClass();
-        assertDomainEventSchema(eventClass);
-
-        assertEquals(1, eventClass.getClusterIds().length);
-
-        final int expectedClusterId = database.getDefaultClusterId();
-        assertEquals(expectedClusterId, eventClass.getClusterIds()[0]);
-    }
 
     @Test
     public void testDocumentAndClassCreationClassExist() {
@@ -86,8 +61,8 @@ public class DomainEventEntryTest {
         final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
                 domainEvent, eventSerializer);
 
-        domainEventEntry.asDocument(database, null);
-        final ODocument result = domainEventEntry.asDocument(database, null);
+        domainEventEntry.asDocument(database);
+        final ODocument result = domainEventEntry.asDocument(database);
 
         assertNotNull(result);
 
@@ -97,40 +72,8 @@ public class DomainEventEntryTest {
         assertDomainEventSchema(eventClass);
 
         assertEquals(1, eventClass.getClusterIds().length);
-
-        final int expectedClusterId = database.getDefaultClusterId();
-        assertEquals(expectedClusterId, eventClass.getClusterIds()[0]);
     }
 
-
-    @Test
-    public void testDocumentAndClassCreationClassExistInAnotherCluster() {
-        final SimpleDomainEvent domainEvent = new SimpleDomainEvent(1, agId("1"), "val");
-        final DomainEventEntry domainEventEntry = new DomainEventEntry("Simple",
-                domainEvent, eventSerializer);
-
-        final int expectedFirstClusterId = database.addPhysicalCluster("FirstCluster");
-        final int expectedSecondClusterId = database.addPhysicalCluster("SecondCluster");
-
-        assertTrue(expectedFirstClusterId != -1);
-        assertTrue(expectedSecondClusterId != -1);
-
-        domainEventEntry.asDocument(database, "FirstCluster");
-        final ODocument result = domainEventEntry.asDocument(database, "SecondCluster");
-
-        assertNotNull(result);
-
-        assertDocumentStructure(domainEvent, result);
-
-        final OClass eventClass = result.getSchemaClass();
-        assertDomainEventSchema(eventClass);
-
-        assertEquals(2, eventClass.getClusterIds().length);
-
-
-        assertTrue(Ints.contains(eventClass.getClusterIds(), expectedFirstClusterId));
-        assertTrue(Ints.contains(eventClass.getClusterIds(), expectedSecondClusterId));
-    }
 
     @Test
     public void testGetters() {

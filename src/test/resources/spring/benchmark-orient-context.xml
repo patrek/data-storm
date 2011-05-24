@@ -10,7 +10,6 @@
 
     <bean id="eventStore" class="ua.com.datastorm.eventstore.orientdb.OrientEventStore">
         <property name="database" ref="oDocumentDatabase"/>
-        <property name="clusterResolver" ref="clusterResolver"/>
     </bean>
 
     <bean id="threadedODatabaseDocumentFactory" class="ua.com.datastorm.eventstore.orientdb.ThreadedODatabaseDocumentFactory">
@@ -31,10 +30,5 @@
           factory-bean="dynamicProxyFactory"
           factory-method="getInstance">
         <constructor-arg index="0" ref="threadedODatabaseDocumentFactory"/>
-    </bean>
-
-    <bean id="clusterResolver"
-          class="ua.com.datastorm.eventstore.orientdb.PerInstanceClusterResolver">
-        <property name="database" ref="oDocumentDatabase"/>
     </bean>
 </beans>
