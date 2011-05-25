@@ -43,7 +43,7 @@ public class OrientPersistenceExceptionTranslatorTest {
     @Test
     public void testTranslateExceptionIfPossibleIllegalStateException() throws Exception {
         DataAccessException result = exceptionTranslator.translateExceptionIfPossible(inputException);
-        assertEquals(result.getClass(), outputException);
+        assertEquals((result != null) ? result.getClass() : null, outputException);
     }
 
     @Parameterized.Parameters

@@ -55,7 +55,7 @@ public class OrientTransactionManager extends AbstractPlatformTransactionManager
 
     private void closeDatabaseAfterFailedBegin(OrientTransactionObject txObj) {
         try {
-            if (txObj.getDatabase() != null) {
+            if (txObj.hasTransaction()) {
                 txObj.getDatabase().rollback();
             }
         } finally {

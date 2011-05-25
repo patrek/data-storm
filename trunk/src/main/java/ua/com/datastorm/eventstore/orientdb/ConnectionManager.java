@@ -17,6 +17,13 @@ public class ConnectionManager {
     private final ODatabaseDocumentPool globalDatabasePool;
     private static final Logger logger = LoggerFactory.getLogger(ConnectionManager.class);
 
+    /**
+     * Simple constructor for connection manager. Create manager which use <code>ODatabaseDocumentPool.global()</code>.
+     *
+     * @param databaseURL
+     * @param databaseUserName
+     * @param databasePassword
+     */
     public ConnectionManager(final String databaseURL, final String databaseUserName, final String databasePassword) {
         this.globalDatabasePool = ODatabaseDocumentPool.global();
         this.databaseURL = databaseURL;
@@ -24,22 +31,20 @@ public class ConnectionManager {
         this.databasePassword = databasePassword;
     }
 
+    /**
+     * Create manager which use specific connection pull.
+     *
+     * @param databaseURL
+     * @param databaseUserName
+     * @param databasePassword
+     * @param pool             - connection pull
+     */
     public ConnectionManager(final String databaseURL, final String databaseUserName, final String databasePassword,
-                             final int minPoolSize, final int maxPoolSize) {
-        this.globalDatabasePool = ODatabaseDocumentPool.global();
-        this.databaseURL = databaseURL;
-        this.databaseUserName = databaseUserName;
-        this.databasePassword = databasePassword;
-        globalDatabasePool.setup(minPoolSize, maxPoolSize);
-    }
-
-    public ConnectionManager(final String databaseURL, final String databaseUserName, final String databasePassword,
-                             final int minPoolSize, final int maxPoolSize, ODatabaseDocumentPool pool) {
+                             ODatabaseDocumentPool pool) {
         this.globalDatabasePool = pool;
         this.databaseURL = databaseURL;
         this.databaseUserName = databaseUserName;
         this.databasePassword = databasePassword;
-        globalDatabasePool.setup(minPoolSize, maxPoolSize);
     }
 
     /**

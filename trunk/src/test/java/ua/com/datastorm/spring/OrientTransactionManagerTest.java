@@ -1,10 +1,13 @@
 package ua.com.datastorm.spring;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import ua.com.datastorm.eventstore.orientdb.ConnectionManager;
@@ -63,6 +66,52 @@ public class OrientTransactionManagerTest {
         transactionManager.doBegin(txObject, null);
 
         verify(connectionMock).begin();
+    }
+
+    @Test
+    public void testDoBeginRuntimeException() {
+        RuntimeException error = new RuntimeException("ERROR");
+        OrientTransactionManager.OrientTransactionObject txObject = transactionManager.new OrientTransactionObject();
+        txObject.setDatabase(connectionMock, false);
+        when(connectionMock.begin()).thenThrow(error);
+        when(connectionMock.rollback()).thenReturn(connectionMock);
+        when(connectionMock.getTransaction()).thenReturn(new OTransactionOptimistic(null));
+        doNothing().when(connectionMock).close();
+
+        boolean caught = false;
+        try {
+            transactionManager.doBegin(txObject, null);
+        } catch (CannotCreateTransactionException e) {
+            caught = true;
+        }
+
+        verify(connectionMock).begin();
+        verify(connectionMock).rollback();
+        verify(connectionMock).close();
+
+        assertTrue("Exception must be caught", caught);
+    }
+
+    @Test
+    public void testDoBeginRuntimeExceptionWithoutConnection() {
+        RuntimeException error = new RuntimeException("ERROR");
+        OrientTransactionManager.OrientTransactionObject txObject = transactionManager.new OrientTransactionObject();
+        txObject.setDatabase(connectionMock, false);
+        when(connectionMock.begin()).thenThrow(error);
+        when(connectionMock.getTransaction()).thenReturn(new OTransactionNoTx(null));
+        doNothing().when(connectionMock).close();
+
+        boolean caught = false;
+        try {
+            transactionManager.doBegin(txObject, null);
+        } catch (CannotCreateTransactionException e) {
+            caught = true;
+        }
+
+        verify(connectionMock).begin();
+        verify(connectionMock).close();
+
+        assertTrue("Exception must be caught", caught);
     }
 
     @Test
@@ -135,6 +184,31 @@ public class OrientTransactionManagerTest {
     }
 
     @Test
+    public void testDoRollbackRuntimeException() {
+        RuntimeException error = new RuntimeException("ERROR");
+        when(connectionMock.rollback()).thenThrow(error);
+
+        when(exceptionTranslatorMock.translateExceptionIfPossible(error)).thenReturn(new InvalidDataAccessApiUsageException(""));
+
+
+        OrientTransactionManager.OrientTransactionObject txObject = transactionManager.new OrientTransactionObject();
+        txObject.setDatabase(connectionMock, false);
+        DefaultTransactionStatus status = new DefaultTransactionStatus(txObject, false, false, false, false, null);
+
+        boolean caught = false;
+        try {
+            transactionManager.doRollback(status);
+        } catch (InvalidDataAccessApiUsageException e) {
+            caught = true;
+        }
+
+        verify(connectionMock).rollback();
+        verify(exceptionTranslatorMock).translateExceptionIfPossible(error);
+
+        assertTrue("Exception must be caught", caught);
+    }
+
+    @Test
     public void testDoCleanUpAfterCompletion() {
         doNothing().when(connectionMock).close();
 
@@ -144,7 +218,18 @@ public class OrientTransactionManagerTest {
         txObject.setDatabase(connectionMock, true);
         transactionManager.doCleanupAfterCompletion(txObject);
 
-        assertFalse("Connection must be unbind", TransactionSynchronizationManager.hasResource(connectionManagerMock));
+        assertFalse("Connection must be unbound", TransactionSynchronizationManager.hasResource(connectionManagerMock));
         verify(connectionMock).close();
+    }
+
+    @Test
+    public void testDoCleanUpAfterCompletionNotNewTx() {
+        TransactionSynchronizationManager.bindResource(connectionManagerMock, connectionMock);
+
+        OrientTransactionManager.OrientTransactionObject txObject = transactionManager.new OrientTransactionObject();
+        txObject.setDatabase(connectionMock, false);
+        transactionManager.doCleanupAfterCompletion(txObject);
+
+        assertTrue("Connection mustn't be unbound", TransactionSynchronizationManager.hasResource(connectionManagerMock));
     }
 }

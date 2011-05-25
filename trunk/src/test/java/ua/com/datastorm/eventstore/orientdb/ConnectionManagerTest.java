@@ -25,17 +25,14 @@ public class ConnectionManagerTest {
     public void testGetNewConnection() {
         ODatabaseDocumentPool poolMock = mock(ODatabaseDocumentPool.class);
 
-        doNothing().when(poolMock).setup(expectedMinPoolSize, expectedMaxPoolSize);
-
         when(poolMock.acquire(expectedDatabaseUrl, expectedUserName, expectedPassword)).thenReturn(expectedConnection);
 
-        connectionManager = new ConnectionManager(expectedDatabaseUrl, expectedUserName, expectedPassword, expectedMinPoolSize, expectedMaxPoolSize, poolMock);
+        connectionManager = new ConnectionManager(expectedDatabaseUrl, expectedUserName, expectedPassword, poolMock);
 
         ODatabaseDocument newConnection = connectionManager.getNewConnection();
 
         assertEquals("Created connection not same as expected.", expectedConnection, newConnection);
 
-        verify(poolMock).setup(expectedMinPoolSize, expectedMaxPoolSize);
         verify(poolMock).acquire(expectedDatabaseUrl, expectedUserName, expectedPassword);
         verifyZeroInteractions(expectedConnection);
     }
