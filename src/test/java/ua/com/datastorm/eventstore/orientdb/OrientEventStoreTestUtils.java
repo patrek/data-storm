@@ -1,7 +1,5 @@
 package ua.com.datastorm.eventstore.orientdb;
 
-import com.google.common.primitives.Ints;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -98,40 +96,6 @@ abstract class OrientEventStoreTestUtils {
      */
     public static AggregateIdentifier agId(String id) {
         return new StringAggregateIdentifier(id);
-    }
-
-    /**
-     * Checks that cluster names that are passed in as array of strings were added.
-     *
-     * @param beforeClusters List of clusters before operation.
-     * @param afterClusters  List of clusters after operation.
-     * @param clusterNames   Names of clusters that should be added.
-     */
-    public static void assertClusterNames(Collection<String> beforeClusters,
-                                          Collection<String> afterClusters, String[] clusterNames) {
-        assertEquals(beforeClusters.size() + clusterNames.length, afterClusters.size());
-        for (String clusterName : clusterNames) {
-            assertFalse(beforeClusters.contains(clusterName));
-            assertTrue(afterClusters.contains(clusterName));
-        }
-    }
-
-    /**
-     * Check that OrientDB class associated only with clusters which names are passed as array od strings.
-     *
-     * @param expectedClusterNames Cluster names to which class should be associated.
-     * @param className            OrientDB class name.
-     * @param database             Database where class should be defined.
-     */
-    public static void assertClassHasClusterIds(String[] expectedClusterNames, String className,
-                                                ODatabaseDocument database) {
-        final OClass oClass = database.getMetadata().getSchema().getClass(className);
-        assertEquals(expectedClusterNames.length, oClass.getClusterIds().length);
-        final List<Integer> clusterIds = Ints.asList(oClass.getClusterIds());
-        for (final String expectedClusterName : expectedClusterNames) {
-            int expectedClusterId = database.getClusterIdByName(expectedClusterName);
-            assertTrue(clusterIds.contains(expectedClusterId));
-        }
     }
 
     /**

@@ -153,12 +153,15 @@ class DomainEventEntry {
 
         eventClass = schema.createClass(DOMAIN_EVENT_CLASS);
 
-        eventClass.createProperty(AGGREGATE_IDENTIFIER_FIELD, OType.STRING).setMandatory(true).setNotNull(true);
-        eventClass.createProperty(SEQUENCE_NUMBER_FIELD, OType.LONG).setMandatory(true).setNotNull(true);
+        eventClass.createProperty(AGGREGATE_IDENTIFIER_FIELD, OType.STRING).setMandatory(true).setNotNull(true).
+                createIndex(OProperty.INDEX_TYPE.NOTUNIQUE);
+        eventClass.createProperty(SEQUENCE_NUMBER_FIELD, OType.LONG).setMandatory(true).setNotNull(true).
+                createIndex(OProperty.INDEX_TYPE.NOTUNIQUE);
         eventClass.createProperty(TIMESTAMP_FIELD, OType.STRING).setMin("29").setMax("29").setMandatory(true).
                 setNotNull(true);
         eventClass.createProperty(BODY_FIELD, OType.BINARY).setMandatory(true).setNotNull(true);
-        eventClass.createProperty(AGGREGATE_TYPE_FIELD, OType.STRING).setMandatory(true).setNotNull(true);
+        eventClass.createProperty(AGGREGATE_TYPE_FIELD, OType.STRING).setMandatory(true).setNotNull(true).
+                createIndex(OProperty.INDEX_TYPE.NOTUNIQUE);
 
         return eventClass;
     }
